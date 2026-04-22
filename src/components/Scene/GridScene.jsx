@@ -93,11 +93,17 @@ export default function GridScene({ pendingModelId, onPlaced }) {
       const model     = placement ? models[placement.model_id] : null
       const { spanX, spanY } = computeCellSpan(model?.boundingBox ?? null, gridConfig.unitMm)
 
+      // Rotation tauscht den World-Footprint: 90°/270° → X↔Z tauschen
+      const yRotNorm = (((placement?.rotation.y ?? 0) % 360) + 360) % 360
+      const swapped  = yRotNorm === 90 || yRotNorm === 270
+      const gSpanX   = swapped ? spanY : spanX
+      const gSpanZ   = swapped ? spanX : spanY
+
       const { cellX, cellY } = worldToCell(worldX, worldZ, gridConfig)
       return {
         ...prev,
-        cellX: clamp(cellX, 0, Math.max(0, gridConfig.gridWidth  - spanX)),
-        cellY: clamp(cellY, 0, Math.max(0, gridConfig.gridDepth - spanY)),
+        cellX: clamp(cellX, 0, Math.max(0, gridConfig.gridWidth  - gSpanX)),
+        cellY: clamp(cellY, 0, Math.max(0, gridConfig.gridDepth - gSpanZ)),
       }
     })
   }, [placements, models, gridConfig])
