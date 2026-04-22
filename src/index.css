@@ -68,14 +68,14 @@ html, body, #root {
   width: 32px;
   height: 32px;
   border-radius: var(--radius-sm);
-  background: transparent;
-  border: 1px solid transparent;
+  background: var(--bg-elev-3);
+  border: 1px solid var(--border);
   cursor: pointer;
-  color: var(--text-dim);
+  color: var(--text);
   transition: background 100ms, border-color 100ms, color 100ms;
   flex-shrink: 0;
 }
-.icon-btn:hover:not(:disabled) { background: var(--bg-elev-2); border-color: var(--border); color: var(--text); }
+.icon-btn:hover:not(:disabled) { background: var(--bg-elev-2); border-color: #555; color: var(--text); }
 .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .icon-btn.danger:hover:not(:disabled) { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
 .icon-btn.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
@@ -87,16 +87,16 @@ html, body, #root {
   height: 32px;
   padding: 0 10px;
   border-radius: var(--radius-sm);
-  background: transparent;
-  border: 1px solid transparent;
+  background: var(--bg-elev-3);
+  border: 1px solid var(--border);
   cursor: pointer;
-  color: var(--text-dim);
+  color: var(--text);
   font: inherit;
   font-size: 13px;
   transition: background 100ms, border-color 100ms, color 100ms;
   white-space: nowrap;
 }
-.icon-text-btn:hover:not(:disabled) { background: var(--bg-elev-2); border-color: var(--border); color: var(--text); }
+.icon-text-btn:hover:not(:disabled) { background: var(--bg-elev-2); border-color: #555; }
 .icon-text-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
 /* ── User chip ── */

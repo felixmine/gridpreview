@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { LayoutGrid, Package, BookOpen } from 'lucide-react'
 import { useAuth } from './context/AuthContext.jsx'
+import { computeCellSpan } from './lib/gridfinity.js'
 import Toolbar from './components/UI/Toolbar.jsx'
 import GridConfig from './components/UI/GridConfig.jsx'
 import ModelLibrary from './components/UI/ModelLibrary.jsx'
@@ -17,11 +18,20 @@ const TABS = [
 ]
 
 function GridTabContent() {
-  const placements  = useStore((s) => s.placements)
-  const gridConfig  = useStore((s) => s.gridConfig)
-  const total       = gridConfig.gridWidth * gridConfig.gridDepth
+  const placements = useStore((s) => s.placements)
+  const gridConfig = useStore((s) => s.gridConfig)
+  const models     = useStore((s) => s.models)
+
+  const total = gridConfig.gridWidth * gridConfig.gridDepth
+
+  // Each placement may span multiple cells; sum the actual footprint.
+  const occupiedCells = placements.reduce((acc, p) => {
+    const { spanX, spanY } = computeCellSpan(models[p.model_id]?.boundingBox ?? null, gridConfig.unitMm)
+    return acc + spanX * spanY
+  }, 0)
+
   const placed      = placements.length
-  const freePercent = total > 0 ? Math.round(((total - placed) / total) * 100) : 100
+  const freePercent = total > 0 ? Math.max(0, Math.round(((total - occupiedCells) / total) * 100)) : 100
 
   return (
     <>
@@ -35,8 +45,8 @@ function GridTabContent() {
           <div className="stat-label">Cells</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{placed}</div>
-          <div className="stat-label">Placed</div>
+          <div className="stat-value">{occupiedCells}</div>
+          <div className="stat-label">Used cells</div>
         </div>
         <div className="stat-card">
           <div className="stat-value" style={{ color: freePercent > 30 ? 'var(--success)' : 'var(--warning)' }}>

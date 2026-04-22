@@ -49,10 +49,18 @@ export default function PlacedModel({
   const anchorX = dragPreview?.cellX ?? placement.cell_x
   const anchorY = dragPreview?.cellY ?? placement.cell_y
 
+  // 90°/270° Y-Rotation tauscht den Footprint-Span in X und Z.
+  // spanX/spanY bleiben im lokalen Mesh-Raum unverändert; für die
+  // Welt-Gruppen-Position müssen sie bei 90°/270° getauscht werden.
+  const yRotNorm = ((placement.rotation.y ?? 0) % 360 + 360) % 360
+  const swapped  = yRotNorm === 90 || yRotNorm === 270
+  const gSpanX   = swapped ? spanY : spanX   // Weltraum-Ausdehnung in X
+  const gSpanZ   = swapped ? spanX : spanY   // Weltraum-Ausdehnung in Z
+
   // Gruppen-Position: Ecke der Ankerzelle + halber Span-Bereich
   const [cornerX, , cornerZ] = cellCornerToWorld(anchorX, anchorY, gridConfig)
-  const groupX = cornerX + (spanX * gridConfig.unitMm) / 2
-  const groupZ = cornerZ + (spanY * gridConfig.unitMm) / 2
+  const groupX = cornerX + (gSpanX * gridConfig.unitMm) / 2
+  const groupZ = cornerZ + (gSpanZ * gridConfig.unitMm) / 2
 
   if (!model?.geometry) return null
 
