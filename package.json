@@ -1,0 +1,32 @@
+{
+  "name": "gridfinity-preview",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Web-based Gridfinity arrangement previewer with 3D STL/OBJ support",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.114.0",
+    "@react-three/fiber": "^8.17.10",
+    "@supabase/supabase-js": "^2.45.4",
+    "occt-import-js": "^0.0.23",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.169.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.2",
+    "vite": "^5.4.8"
+  },
+  "overrides": {
+    "three-mesh-bvh": "^0.8.0"
+  }
+}

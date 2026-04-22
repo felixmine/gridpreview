@@ -1,0 +1,44 @@
+# ---------------------------------------------------------------------
+# Optional: lokales Testen via Docker.
+#
+# "dev"  -> Vite-Dev-Server mit Hot-Reload (Port 5173)
+# "prod" -> gebauter nginx-Container (Port 8080)
+#
+# Starten:
+#   docker compose --profile dev  up        # Dev-Server
+#   docker compose --profile prod up --build
+#
+# Die Supabase-Keys werden aus deiner lokalen .env.local gezogen.
+# ---------------------------------------------------------------------
+
+services:
+  dev:
+    profiles: ["dev"]
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    env_file:
+      - .env.local
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+  prod:
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Diese Werte kommen aus der .env.local oder Shell-Env
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  node_modules:
