@@ -1,79 +1,106 @@
+import { Undo2, Redo2, RotateCcw, Trash2, X, LogOut } from 'lucide-react'
 import { useStore } from '../../store.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 
-// ---------------------------------------------------------------------
-// Toolbar: Kopfzeile mit App-Titel, User-Status und globalen Aktionen
-// (Undo, Redo, Clear, Logout).
-// ---------------------------------------------------------------------
-
 export default function Toolbar() {
   const { user, signOut } = useAuth()
-  const undo = useStore((s) => s.undo)
-  const redo = useStore((s) => s.redo)
-  const clearAll = useStore((s) => s.clearAll)
-  const history = useStore((s) => s.history)
-  const selectedId = useStore((s) => s.selectedId)
+
+  // Derived booleans avoid re-renders from unrelated state changes
+  const canUndo    = useStore((s) => s.history.undo.length > 0)
+  const canRedo    = useStore((s) => s.history.redo.length > 0)
+  const hasSelection = useStore((s) => s.selectedId !== null)
+  const dirty      = useStore((s) => s.dirty)
+
+  const undo            = useStore((s) => s.undo)
+  const redo            = useStore((s) => s.redo)
+  const clearAll        = useStore((s) => s.clearAll)
   const removePlacement = useStore((s) => s.removePlacement)
   const rotatePlacement = useStore((s) => s.rotatePlacement)
+  const selectedId      = useStore((s) => s.selectedId)
+
+  const avatarLetter = user?.email?.[0] ?? '?'
 
   return (
-    <header
-      style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '10px 16px',
-        borderBottom: '1px solid var(--border)',
-        background: 'var(--bg-elev)',
-        flexShrink: 0,
-      }}
-    >
-      <h1 style={{ margin: 0, fontSize: 18, fontWeight: 600, marginRight: 8 }}>
-        Gridfinity <span style={{ color: 'var(--accent)' }}>Preview</span>
-      </h1>
-
-      <div className="row" style={{ gap: 6 }}>
-        <button
-          onClick={undo}
-          disabled={history.undo.length === 0}
-          title="Rückgängig (Ctrl+Z)"
-          style={{ padding: '6px 10px' }}
-        >↶ Undo</button>
-        <button
-          onClick={redo}
-          disabled={history.redo.length === 0}
-          title="Wiederholen (Ctrl+Y)"
-          style={{ padding: '6px 10px' }}
-        >↷ Redo</button>
-        <button
-          onClick={() => rotatePlacement(selectedId)}
-          disabled={!selectedId}
-          title="Drehen (R)"
-          style={{ padding: '6px 10px' }}
-        >⟳ Drehen</button>
-        <button
-          onClick={() => removePlacement(selectedId)}
-          disabled={!selectedId}
-          title="Löschen (Entf)"
-          className="danger"
-          style={{ padding: '6px 10px' }}
-        >Löschen</button>
-        <button
-          onClick={() => { if (confirm('Alle Platzierungen entfernen?')) clearAll() }}
-          style={{ padding: '6px 10px' }}
-          title="Gesamtes Grid leeren"
-        >Grid leeren</button>
+    <header className="toolbar">
+      <div className="toolbar-logo">
+        Gridfinity<span>Preview</span>
       </div>
 
-      <div style={{ flex: 1 }} />
+      <div className="toolbar-divider" />
+
+      <button
+        className="icon-btn"
+        onClick={undo}
+        disabled={!canUndo}
+        title="Undo (Ctrl+Z)"
+      >
+        <Undo2 size={15} />
+      </button>
+      <button
+        className="icon-btn"
+        onClick={redo}
+        disabled={!canRedo}
+        title="Redo (Ctrl+Y)"
+      >
+        <Redo2 size={15} />
+      </button>
+
+      <div className="toolbar-divider" />
+
+      <button
+        className="icon-btn"
+        onClick={() => rotatePlacement(selectedId)}
+        disabled={!hasSelection}
+        title="Rotate 90° (R)"
+      >
+        <RotateCcw size={15} />
+      </button>
+      <button
+        className="icon-btn danger"
+        onClick={() => removePlacement(selectedId)}
+        disabled={!hasSelection}
+        title="Delete selected (Del)"
+      >
+        <Trash2 size={15} />
+      </button>
+
+      <div className="toolbar-divider" />
+
+      <button
+        className="icon-text-btn"
+        onClick={() => { if (window.confirm('Remove all placements?')) clearAll() }}
+        title="Clear grid"
+      >
+        <X size={13} />
+        Clear grid
+      </button>
+
+      <div className="toolbar-spacer" />
+
+      {dirty && (
+        <div className="dirty-label">
+          <span className="dirty-dot" />
+          Unsaved changes
+        </div>
+      )}
 
       {user ? (
         <>
-          <span className="hint-text" title={user.email}>
-            {user.email}
-          </span>
-          <button onClick={signOut} style={{ padding: '6px 10px' }}>Abmelden</button>
+          <div className="toolbar-divider" />
+          <div className="user-chip" title={user.email}>
+            <div className="user-avatar">{avatarLetter}</div>
+            <span className="user-chip-email">{user.email}</span>
+          </div>
+          <button
+            className="icon-btn"
+            onClick={signOut}
+            title="Sign out"
+          >
+            <LogOut size={15} />
+          </button>
         </>
       ) : (
-        <span className="hint-text">Gastmodus</span>
+        <span className="hint-text">Guest mode</span>
       )}
     </header>
   )

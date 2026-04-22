@@ -1,33 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { Save, FolderOpen, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useStore } from '../../store.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { validatePlacement } from '../../lib/gridfinity.js'
 
-// ---------------------------------------------------------------------
-// ArrangementManager: Liste der gespeicherten Anordnungen + Speichern/Laden.
-// Nutzt nur die `arrangements`-Tabelle (RLS stellt sicher, dass nur
-// eigene Arrangements zurückkommen).
-// ---------------------------------------------------------------------
-
 export default function ArrangementManager() {
-  const { user, isConfigured } = useAuth()
-  const gridConfig = useStore((s) => s.gridConfig)
-  const placements = useStore((s) => s.placements)
+  const { user } = useAuth()
+  const gridConfig      = useStore((s) => s.gridConfig)
+  const placements      = useStore((s) => s.placements)
   const loadArrangement = useStore((s) => s.loadArrangement)
-  const markSaved = useStore((s) => s.markSaved)
-  const dirty = useStore((s) => s.dirty)
+  const markSaved       = useStore((s) => s.markSaved)
+  const dirty           = useStore((s) => s.dirty)
 
-  const [list, setList] = useState([])
-  const [name, setName] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const [list,   setList]   = useState([])
+  const [name,   setName]   = useState('')
+  const [busy,   setBusy]   = useState(false)
+  const [error,  setError]  = useState('')
   const [status, setStatus] = useState('')
 
-  const disabled = !user || !isConfigured
-
-  async function refresh() {
-    if (disabled) return
+  const refresh = useCallback(async () => {
+    if (!user) return
     setError('')
     const { data, error: err } = await supabase
       .from('arrangements')
@@ -36,41 +29,35 @@ export default function ArrangementManager() {
       .limit(50)
     if (err) { setError(err.message); return }
     setList(data ?? [])
-  }
+  }, [user])
 
-  useEffect(() => { refresh() /* eslint-disable-next-line */ }, [user])
+  useEffect(() => { refresh() }, [refresh])
 
   async function onSave() {
-    if (disabled) return
     setError(''); setStatus('')
     const trimmed = name.trim()
-    if (trimmed.length === 0) { setError('Bitte einen Namen eingeben.'); return }
-    if (trimmed.length > 80) { setError('Name zu lang (max. 80 Zeichen).'); return }
+    if (!trimmed)           { setError('Enter a name.'); return }
+    if (trimmed.length > 80) { setError('Name too long (max 80 chars).'); return }
 
-    // Client-seitige Platzierungs-Validierung vor dem INSERT
     const safePlacements = placements
       .map((p) => ({
-        model_id: p.model_id,
-        cell_x: p.cell_x,
-        cell_y: p.cell_y,
-        rotation: p.rotation,
-        color: p.color,
+        model_id: p.model_id, cell_x: p.cell_x, cell_y: p.cell_y,
+        rotation: p.rotation, color: p.color,
       }))
       .filter((p) => validatePlacement(p, gridConfig))
 
     setBusy(true)
     try {
-      const payload = {
-        user_id: user.id,
-        name: trimmed,
+      const { error: err } = await supabase.from('arrangements').insert({
+        user_id:    user.id,
+        name:       trimmed,
         grid_width: gridConfig.gridWidth,
         grid_depth: gridConfig.gridDepth,
-        unit_mm: gridConfig.unitMm,
+        unit_mm:    gridConfig.unitMm,
         placements: safePlacements,
-      }
-      const { error: err } = await supabase.from('arrangements').insert(payload)
+      })
       if (err) throw err
-      setStatus(`"${trimmed}" gespeichert.`)
+      setStatus(`Saved "${trimmed}"`)
       setName('')
       markSaved()
       await refresh()
@@ -82,95 +69,86 @@ export default function ArrangementManager() {
   }
 
   async function onLoad(id) {
-    if (disabled) return
     setError(''); setStatus('')
     const { data, error: err } = await supabase
-      .from('arrangements')
-      .select('*')
-      .eq('id', id)
-      .single()
+      .from('arrangements').select('*').eq('id', id).single()
     if (err) { setError(err.message); return }
     loadArrangement(data)
-    setStatus(`"${data.name}" geladen.`)
+    setStatus(`Loaded "${data.name}"`)
   }
 
   async function onDelete(id, label) {
-    if (disabled) return
-    if (!window.confirm(`"${label}" wirklich löschen?`)) return
+    if (!window.confirm(`Delete "${label}"?`)) return
     setError(''); setStatus('')
     const { error: err } = await supabase.from('arrangements').delete().eq('id', id)
     if (err) { setError(err.message); return }
-    setStatus(`"${label}" gelöscht.`)
+    setStatus(`Deleted "${label}"`)
     await refresh()
   }
 
-  if (!isConfigured) {
-    return (
-      <div className="stack">
-        <h4 style={{ margin: 0 }}>Anordnungen</h4>
-        <p className="hint-text">
-          Supabase nicht konfiguriert - Speichern/Laden ist deaktiviert.
-        </p>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return (
-      <div className="stack">
-        <h4 style={{ margin: 0 }}>Anordnungen</h4>
-        <p className="hint-text">Melde dich an, um Anordnungen zu speichern.</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="stack">
-      <h4 style={{ margin: 0 }}>
-        Anordnungen {dirty && <span className="hint-text" style={{ fontWeight: 'normal' }}>(ungespeichert)</span>}
-      </h4>
-
-      <div className="row">
-        <input
-          type="text"
-          placeholder="Name der Anordnung"
-          maxLength={80}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          aria-label="Name der neuen Anordnung"
-        />
-        <button className="primary" onClick={onSave} disabled={busy || !name.trim()}>
-          Speichern
-        </button>
+    <>
+      <div className="panel">
+        <div className="panel-title">
+          Save arrangement
+          {dirty && <span style={{ color: 'var(--warning)', fontSize: 10, fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}>● unsaved</span>}
+        </div>
+        <div className="row" style={{ gap: 6 }}>
+          <input
+            type="text"
+            placeholder="Arrangement name…"
+            maxLength={80}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSave()}
+          />
+          <button
+            className="btn-xs primary"
+            onClick={onSave}
+            disabled={busy || !name.trim()}
+            title="Save"
+          >
+            {busy ? <span className="spinner" /> : <Save size={13} />}
+          </button>
+        </div>
+        {error  && <div className="error-text"   style={{ marginTop: 6 }}>{error}</div>}
+        {status && <div className="success-text" style={{ marginTop: 6 }}>{status}</div>}
       </div>
 
-      {error && <div className="error-text">{error}</div>}
-      {status && <div style={{ color: 'var(--success)', fontSize: 13 }}>{status}</div>}
-
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {list.map((a) => (
-          <li
-            key={a.id}
-            style={{
-              display: 'flex', gap: 8, alignItems: 'center',
-              padding: '6px 8px', marginBottom: 6,
-              border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {a.name}
+      {list.length > 0 && (
+        <div className="panel">
+          <div className="panel-title">Saved</div>
+          {list.map((a) => (
+            <div key={a.id} className="arr-item">
+              <div className="arr-info">
+                <div className="arr-name">{a.name}</div>
+                <div className="arr-sub">
+                  {a.grid_width}×{a.grid_depth} · {a.unit_mm} mm ·{' '}
+                  {new Date(a.updated_at).toLocaleDateString()}
+                </div>
               </div>
-              <div className="hint-text">
-                {a.grid_width}×{a.grid_depth} · {a.unit_mm} mm · {new Date(a.updated_at).toLocaleDateString()}
-              </div>
+              <button
+                className="btn-xs"
+                onClick={() => onLoad(a.id)}
+                title="Load"
+              >
+                <FolderOpen size={12} />
+              </button>
+              <button
+                className="btn-xs danger"
+                onClick={() => onDelete(a.id, a.name)}
+                title="Delete"
+              >
+                <Trash2 size={12} />
+              </button>
             </div>
-            <button onClick={() => onLoad(a.id)} style={{ padding: '4px 8px', fontSize: 12 }}>Laden</button>
-            <button onClick={() => onDelete(a.id, a.name)} className="danger" style={{ padding: '4px 8px', fontSize: 12 }}>✕</button>
-          </li>
-        ))}
-        {list.length === 0 && <li className="hint-text">Noch keine Anordnungen.</li>}
-      </ul>
-    </div>
+          ))}
+        </div>
+      )}
+
+      {list.length === 0 && (
+        <p className="hint-text">No saved arrangements yet.</p>
+      )}
+    </>
   )
 }

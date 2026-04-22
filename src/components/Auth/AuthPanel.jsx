@@ -1,49 +1,35 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext.jsx'
 
-// ---------------------------------------------------------------------
-// AuthPanel: kombinierte Login-/Registrierungs-Form.
-// Sicherheit:
-//   - Minimum Passwort-Länge 8 Zeichen (Frontend-Check), Supabase erzwingt
-//     zusätzlich eigene Policies.
-//   - Email wird clientseitig nur grob validiert - Supabase tut den Rest.
-//   - Rate-Limiting & Confirm-Email übernimmt Supabase Auth.
-// ---------------------------------------------------------------------
-
 export default function AuthPanel() {
   const { signIn, signUp, isConfigured } = useAuth()
-  const [mode, setMode] = useState('login') // 'login' | 'signup'
-  const [email, setEmail] = useState('')
+  const [mode,     setMode]     = useState('login')
+  const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [info, setInfo] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [error,    setError]    = useState('')
+  const [info,     setInfo]     = useState('')
+  const [busy,     setBusy]     = useState(false)
 
   if (!isConfigured) {
     return (
-      <div className="panel" style={{ maxWidth: 420 }}>
-        <h3 style={{ margin: 0, marginBottom: 8 }}>Lokaler Modus</h3>
-        <p className="hint-text" style={{ lineHeight: 1.4 }}>
-          Supabase ist nicht konfiguriert. Du kannst die App lokal verwenden, aber
-          Anordnungen werden <strong>nicht</strong> in die Cloud gespeichert.
-          Lege eine <code>.env.local</code> mit deinen Supabase-Keys an, um
-          Login und Cloud-Speicher zu aktivieren (siehe README).
-        </p>
+      <div className="panel hint-text" style={{ lineHeight: 1.6 }}>
+        <strong style={{ color: 'var(--text)', display: 'block', marginBottom: 4 }}>Local mode</strong>
+        Supabase is not configured. Arrangements cannot be saved to the cloud.
+        Add a <code>.env.local</code> with your Supabase keys to enable login (see README).
       </div>
     )
   }
 
   const validate = () => {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Bitte eine gültige E-Mail eingeben.'
-    if (password.length < 8) return 'Passwort muss mindestens 8 Zeichen lang sein.'
-    if (password.length > 72) return 'Passwort darf maximal 72 Zeichen lang sein.'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Enter a valid email.'
+    if (password.length < 8) return 'Password must be at least 8 characters.'
+    if (password.length > 72) return 'Password too long.'
     return null
   }
 
   async function onSubmit(e) {
     e.preventDefault()
-    setError('')
-    setInfo('')
+    setError(''); setInfo('')
     const v = validate()
     if (v) { setError(v); return }
     setBusy(true)
@@ -52,7 +38,7 @@ export default function AuthPanel() {
         await signIn(email, password)
       } else {
         await signUp(email, password)
-        setInfo('Prüfe dein Postfach und bestätige die Registrierung.')
+        setInfo('Check your inbox and confirm your email to complete signup.')
       }
     } catch (err) {
       setError(err?.message ?? String(err))
@@ -62,22 +48,23 @@ export default function AuthPanel() {
   }
 
   return (
-    <div className="panel" style={{ maxWidth: 420, margin: '0 auto' }}>
-      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
-        <h3 style={{ margin: 0 }}>{mode === 'login' ? 'Anmelden' : 'Registrieren'}</h3>
+    <div className="panel">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <strong style={{ fontSize: 13 }}>{mode === 'login' ? 'Sign in' : 'Create account'}</strong>
         <button
           type="button"
+          className="btn-xs"
           onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setInfo('') }}
-          style={{ fontSize: 12 }}
         >
-          {mode === 'login' ? 'Neu hier? Registrieren' : 'Schon Account? Anmelden'}
+          {mode === 'login' ? 'Register' : 'Sign in'}
         </button>
       </div>
-      <form onSubmit={onSubmit} className="stack" autoComplete="on">
+
+      <form onSubmit={onSubmit} className="col" autoComplete="on">
         <div>
-          <label htmlFor="email">E-Mail</label>
+          <label htmlFor="auth-email">Email</label>
           <input
-            id="email"
+            id="auth-email"
             type="email"
             name="email"
             autoComplete="email"
@@ -88,9 +75,9 @@ export default function AuthPanel() {
           />
         </div>
         <div>
-          <label htmlFor="password">Passwort</label>
+          <label htmlFor="auth-password">Password</label>
           <input
-            id="password"
+            id="auth-password"
             type="password"
             name="password"
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -100,12 +87,11 @@ export default function AuthPanel() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <p className="hint-text" style={{ marginTop: 4 }}>Mindestens 8 Zeichen.</p>
         </div>
         {error && <div className="error-text" role="alert">{error}</div>}
-        {info && <div style={{ color: 'var(--success)', fontSize: 13 }}>{info}</div>}
+        {info  && <div className="success-text">{info}</div>}
         <button className="primary" type="submit" disabled={busy}>
-          {busy ? <span className="spinner" /> : (mode === 'login' ? 'Anmelden' : 'Registrieren')}
+          {busy ? <span className="spinner" /> : (mode === 'login' ? 'Sign in' : 'Register')}
         </button>
       </form>
     </div>

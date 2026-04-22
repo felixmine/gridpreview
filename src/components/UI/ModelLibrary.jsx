@@ -1,27 +1,24 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
+import { Upload, Box, Trash2 } from 'lucide-react'
 import { useStore } from '../../store.js'
 import { loadModelFromFile, ALLOWED_EXTENSIONS, MAX_FILE_SIZE } from '../../lib/modelLoader.js'
 
-// ---------------------------------------------------------------------
-// ModelLibrary: Zeigt alle geladenen Modelle + Upload-Button.
-// Nach Auswahl eines Modells wird es beim nächsten Klick auf eine Zelle
-// platziert (über die pendingModelId im Parent).
-// ---------------------------------------------------------------------
+const HINT = ALLOWED_EXTENSIONS.join(' · ').toUpperCase()
+const MAX_MB = Math.round(MAX_FILE_SIZE / 1024 / 1024)
 
 export default function ModelLibrary({ pendingModelId, setPendingModelId }) {
-  const models = useStore((s) => s.models)
-  const addModel = useStore((s) => s.addModel)
+  const models      = useStore((s) => s.models)
+  const addModel    = useStore((s) => s.addModel)
   const removeModel = useStore((s) => s.removeModel)
+
   const fileInputRef = useRef(null)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const [busy,     setBusy]     = useState(false)
+  const [error,    setError]    = useState('')
+  const [dragging, setDragging] = useState(false)
 
-  async function onFilesSelected(e) {
-    setError('')
-    const files = Array.from(e.target.files ?? [])
-    e.target.value = '' // Reset, damit dieselbe Datei erneut wählbar ist
+  const handleFiles = useCallback(async (files) => {
     if (!files.length) return
-
+    setError('')
     setBusy(true)
     for (const file of files) {
       try {
@@ -42,84 +39,121 @@ export default function ModelLibrary({ pendingModelId, setPendingModelId }) {
       }
     }
     setBusy(false)
+  }, [addModel])
+
+  function onFileInput(e) {
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = ''
+    handleFiles(files)
+  }
+
+  function onDrop(e) {
+    e.preventDefault()
+    setDragging(false)
+    handleFiles(Array.from(e.dataTransfer.files))
+  }
+
+  function onDragOver(e) {
+    e.preventDefault()
+    setDragging(true)
+  }
+
+  function onDragLeave(e) {
+    if (!e.currentTarget.contains(e.relatedTarget)) setDragging(false)
   }
 
   const modelList = Object.values(models)
 
   return (
-    <div className="stack">
-      <h4 style={{ margin: 0 }}>Modelle</h4>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={ALLOWED_EXTENSIONS.join(',')}
-        multiple
-        onChange={onFilesSelected}
-        style={{ display: 'none' }}
-      />
-      <button
-        type="button"
+    <>
+      {/* Drop zone */}
+      <div
+        className={`drop-zone${dragging ? ' drag-over' : ''}`}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
         onClick={() => fileInputRef.current?.click()}
-        disabled={busy}
-        className="primary"
       >
-        {busy ? <span className="spinner" /> : 'Dateien hochladen'}
-      </button>
-      <p className="hint-text">
-        {ALLOWED_EXTENSIONS.join(', ')} · max {Math.round(MAX_FILE_SIZE / 1024 / 1024)} MB
-      </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ALLOWED_EXTENSIONS.join(',')}
+          multiple
+          onChange={onFileInput}
+          style={{ display: 'none' }}
+        />
+        {busy
+          ? <span className="spinner" />
+          : <Upload size={22} strokeWidth={1.5} />
+        }
+        <div className="drop-zone-title">
+          {busy ? 'Loading…' : 'Drop files or click to browse'}
+        </div>
+        <div className="drop-zone-hint">{HINT} · max {MAX_MB} MB</div>
+      </div>
+
       {error && <div className="error-text">{error}</div>}
 
-      {modelList.length === 0 ? (
-        <p className="hint-text">Noch keine Modelle geladen.</p>
-      ) : (
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {modelList.map((m) => (
-            <li
-              key={m.id}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 8,
-                padding: '6px 8px',
-                borderRadius: 'var(--radius)',
-                border: '1px solid',
-                borderColor: pendingModelId === m.id ? 'var(--accent)' : 'var(--border)',
-                background: pendingModelId === m.id ? 'rgba(79,140,255,0.08)' : 'transparent',
-                marginBottom: 6,
-                cursor: 'pointer',
-              }}
-              onClick={() => setPendingModelId(pendingModelId === m.id ? null : m.id)}
-              title={pendingModelId === m.id
-                ? 'Klicke auf eine Zelle im Grid um zu platzieren'
-                : 'Modell wählen'}
-            >
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {m.name}
+      {/* Model list */}
+      {modelList.length > 0 && (
+        <div className="panel">
+          <div className="panel-title">
+            Library
+            <span style={{ color: 'var(--text-subtle)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>
+              {modelList.length}
+            </span>
+          </div>
+
+          {modelList.map((m) => {
+            const selected = pendingModelId === m.id
+            return (
+              <div
+                key={m.id}
+                className={`model-card${selected ? ' selected' : ''}`}
+                onClick={() => setPendingModelId(selected ? null : m.id)}
+                title={selected ? 'Click a cell to place · ESC to cancel' : 'Select to place'}
+              >
+                <div className="model-icon">
+                  <Box size={14} />
                 </div>
-                <div className="hint-text">
-                  {m.triangleCount.toLocaleString()} Dreiecke
+                <div className="model-meta">
+                  <div className="model-name">{m.name}</div>
+                  <div className="model-sub">{m.triangleCount.toLocaleString()} triangles</div>
                 </div>
+                <button
+                  type="button"
+                  className="btn-xs danger"
+                  onClick={(e) => { e.stopPropagation(); removeModel(m.id) }}
+                  title="Remove model"
+                >
+                  <Trash2 size={12} />
+                </button>
               </div>
-              <button
-                type="button"
-                className="danger"
-                style={{ padding: '4px 8px', fontSize: 12 }}
-                onClick={(e) => { e.stopPropagation(); removeModel(m.id) }}
-                title="Modell entfernen"
-              >✕</button>
-            </li>
-          ))}
-        </ul>
+            )
+          })}
+        </div>
+      )}
+
+      {modelList.length === 0 && !busy && (
+        <p className="hint-text">No models loaded yet.</p>
       )}
 
       {pendingModelId && (
-        <div className="hint-text" style={{ color: 'var(--accent)' }}>
-          Klicke eine Zelle um zu platzieren · ESC zum Abbrechen
+        <div style={{
+          background: 'var(--accent-bg)',
+          border: '1px solid var(--accent)',
+          borderRadius: 'var(--radius)',
+          padding: '9px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}>
+          <span className="pulse-dot" />
+          <span style={{ fontSize: 12, color: 'var(--accent)' }}>
+            Click a grid cell to place · <strong>ESC</strong> to cancel
+          </span>
         </div>
       )}
-    </div>
+    </>
   )
 }
