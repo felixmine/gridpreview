@@ -85,7 +85,17 @@ export const useStore = create((set, get) => ({
 
   // -------------------- Models (RAM-Library) --------------------
   addModel(model) {
-    set((s) => ({ models: { ...s.models, [model.id]: model } }))
+    set((s) => ({
+      models: {
+        ...s.models,
+        [model.id]: { preferredColor: randomColor(), ...model },
+      },
+    }))
+  },
+  setModelColor(id, color) {
+    set((s) => ({
+      models: { ...s.models, [id]: { ...s.models[id], preferredColor: color } },
+    }))
   },
   removeModel(id) {
     set((s) => {
@@ -116,7 +126,7 @@ export const useStore = create((set, get) => ({
             cell_x: cellX,
             cell_y: cellY,
             rotation: { x: 0, y: 0, z: 0 },
-            color: randomColor(),
+            color: s.models[modelId]?.preferredColor ?? randomColor(),
           },
         ],
         selectedId: id,

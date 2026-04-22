@@ -1,15 +1,17 @@
 import { useState, useRef, useCallback } from 'react'
 import { Upload, Box, Trash2 } from 'lucide-react'
 import { useStore } from '../../store.js'
+
 import { loadModelFromFile, ALLOWED_EXTENSIONS, MAX_FILE_SIZE } from '../../lib/modelLoader.js'
 
 const HINT = ALLOWED_EXTENSIONS.join(' · ').toUpperCase()
 const MAX_MB = Math.round(MAX_FILE_SIZE / 1024 / 1024)
 
 export default function ModelLibrary({ pendingModelId, setPendingModelId }) {
-  const models      = useStore((s) => s.models)
-  const addModel    = useStore((s) => s.addModel)
-  const removeModel = useStore((s) => s.removeModel)
+  const models        = useStore((s) => s.models)
+  const addModel      = useStore((s) => s.addModel)
+  const removeModel   = useStore((s) => s.removeModel)
+  const setModelColor = useStore((s) => s.setModelColor)
 
   const fileInputRef = useRef(null)
   const [busy,     setBusy]     = useState(false)
@@ -120,6 +122,22 @@ export default function ModelLibrary({ pendingModelId, setPendingModelId }) {
                   <div className="model-name">{m.name}</div>
                   <div className="model-sub">{m.triangleCount.toLocaleString()} triangles</div>
                 </div>
+                {/* Color swatch — sets preferred color for future placements */}
+                <label
+                  className="model-color-swatch"
+                  title="Set model color"
+                  style={{ background: m.preferredColor ?? '#888' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="color"
+                    value={m.preferredColor ?? '#888888'}
+                    onChange={(e) => setModelColor(m.id, e.target.value)}
+                    style={{ opacity: 0, position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}
+                    tabIndex={-1}
+                  />
+                </label>
+
                 <button
                   type="button"
                   className="btn-xs danger"

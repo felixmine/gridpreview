@@ -45,7 +45,7 @@ html, body, #root {
   align-items: center;
   gap: 6px;
   padding: 0 14px;
-  height: 52px;
+  height: 56px;
   background: var(--bg-elev);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -65,15 +65,16 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   background: var(--bg-elev-3);
   border: 1px solid #555;
   cursor: pointer;
   color: var(--text);
-  transition: background 100ms, border-color 100ms, color 100ms;
+  transition: background 100ms, border-color 100ms, color 100ms, box-shadow 100ms;
   flex-shrink: 0;
+  position: relative;
 }
 .icon-btn:hover:not(:disabled) { background: #3a4149; border-color: #777; }
 .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -266,6 +267,22 @@ html, body, #root {
 }
 .stat-value { font-size: 18px; font-weight: 700; line-height: 1.2; }
 .stat-label { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+/* ── Model color swatch ── */
+.model-color-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 100ms, transform 100ms;
+}
+.model-color-swatch:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.15);
+}
 
 /* ── Model cards & drop zone ── */
 .drop-zone {

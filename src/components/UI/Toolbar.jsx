@@ -1,21 +1,27 @@
+import { useRef } from 'react'
 import { Undo2, Redo2, RotateCcw, Trash2, X, LogOut } from 'lucide-react'
 import { useStore } from '../../store.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 
 export default function Toolbar() {
   const { user, signOut } = useAuth()
+  const colorInputRef = useRef(null)
 
-  // Derived booleans avoid re-renders from unrelated state changes
-  const canUndo    = useStore((s) => s.history.undo.length > 0)
-  const canRedo    = useStore((s) => s.history.redo.length > 0)
+  const canUndo      = useStore((s) => s.history.undo.length > 0)
+  const canRedo      = useStore((s) => s.history.redo.length > 0)
   const hasSelection = useStore((s) => s.selectedId !== null)
-  const dirty      = useStore((s) => s.dirty)
+  const dirty        = useStore((s) => s.dirty)
+  const selectedColor = useStore((s) => {
+    if (!s.selectedId) return '#888888'
+    return s.placements.find((p) => p.id === s.selectedId)?.color ?? '#888888'
+  })
 
   const undo            = useStore((s) => s.undo)
   const redo            = useStore((s) => s.redo)
   const clearAll        = useStore((s) => s.clearAll)
   const removePlacement = useStore((s) => s.removePlacement)
   const rotatePlacement = useStore((s) => s.rotatePlacement)
+  const recolorPlacement = useStore((s) => s.recolorPlacement)
   const selectedId      = useStore((s) => s.selectedId)
 
   const avatarLetter = user?.email?.[0] ?? '?'
@@ -34,7 +40,7 @@ export default function Toolbar() {
         disabled={!canUndo}
         title="Undo (Ctrl+Z)"
       >
-        <Undo2 size={15} />
+        <Undo2 size={17} />
       </button>
       <button
         className="icon-btn"
@@ -42,7 +48,7 @@ export default function Toolbar() {
         disabled={!canRedo}
         title="Redo (Ctrl+Y)"
       >
-        <Redo2 size={15} />
+        <Redo2 size={17} />
       </button>
 
       <div className="toolbar-divider" />
@@ -53,7 +59,7 @@ export default function Toolbar() {
         disabled={!hasSelection}
         title="Rotate 90° (R)"
       >
-        <RotateCcw size={15} />
+        <RotateCcw size={17} />
       </button>
       <button
         className="icon-btn danger"
@@ -61,7 +67,29 @@ export default function Toolbar() {
         disabled={!hasSelection}
         title="Delete selected (Del)"
       >
-        <Trash2 size={15} />
+        <Trash2 size={17} />
+      </button>
+
+      {/* Color swatch — only meaningful when something is selected */}
+      <button
+        className="icon-btn"
+        disabled={!hasSelection}
+        title="Change placement color"
+        onClick={() => hasSelection && colorInputRef.current?.click()}
+        style={hasSelection ? {
+          background: selectedColor,
+          borderColor: selectedColor,
+          boxShadow: `0 0 0 2px var(--bg-elev), 0 0 0 3px ${selectedColor}44`,
+        } : undefined}
+      >
+        <input
+          ref={colorInputRef}
+          type="color"
+          value={selectedColor}
+          onChange={(e) => recolorPlacement(selectedId, e.target.value)}
+          style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
+          tabIndex={-1}
+        />
       </button>
 
       <div className="toolbar-divider" />
@@ -71,7 +99,7 @@ export default function Toolbar() {
         onClick={() => { if (window.confirm('Remove all placements?')) clearAll() }}
         title="Clear grid"
       >
-        <X size={13} />
+        <X size={15} />
         Clear grid
       </button>
 
@@ -96,7 +124,7 @@ export default function Toolbar() {
             onClick={signOut}
             title="Sign out"
           >
-            <LogOut size={15} />
+            <LogOut size={17} />
           </button>
         </>
       ) : (
