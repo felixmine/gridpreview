@@ -1,11 +1,10 @@
-import { useRef } from 'react'
 import { Undo2, Redo2, RotateCcw, Trash2, X, LogOut } from 'lucide-react'
 import { useStore } from '../../store.js'
 import { useAuth } from '../../context/AuthContext.jsx'
+import ColorPicker from './ColorPicker.jsx'
 
 export default function Toolbar() {
   const { user, signOut } = useAuth()
-  const colorInputRef = useRef(null)
 
   const canUndo      = useStore((s) => s.history.undo.length > 0)
   const canRedo      = useStore((s) => s.history.redo.length > 0)
@@ -71,26 +70,22 @@ export default function Toolbar() {
       </button>
 
       {/* Color swatch — only meaningful when something is selected */}
-      <button
-        className="icon-btn"
+      <ColorPicker
+        value={selectedColor}
+        onChange={(hex) => recolorPlacement(selectedId, hex)}
         disabled={!hasSelection}
-        title="Change placement color"
-        onClick={() => hasSelection && colorInputRef.current?.click()}
-        style={hasSelection ? {
-          background: selectedColor,
-          borderColor: selectedColor,
-          boxShadow: `0 0 0 2px var(--bg-elev), 0 0 0 3px ${selectedColor}44`,
-        } : undefined}
       >
-        <input
-          ref={colorInputRef}
-          type="color"
-          value={selectedColor}
-          onChange={(e) => recolorPlacement(selectedId, e.target.value)}
-          style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
-          tabIndex={-1}
+        <button
+          className="icon-btn"
+          disabled={!hasSelection}
+          title="Change placement color"
+          style={hasSelection ? {
+            background: selectedColor,
+            borderColor: selectedColor,
+            boxShadow: `0 0 0 2px var(--bg-elev), 0 0 0 3px ${selectedColor}44`,
+          } : undefined}
         />
-      </button>
+      </ColorPicker>
 
       <div className="toolbar-divider" />
 

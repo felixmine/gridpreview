@@ -268,6 +268,97 @@ html, body, #root {
 .stat-value { font-size: 18px; font-weight: 700; line-height: 1.2; }
 .stat-label { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
 
+/* ── Color picker popover ── */
+.color-picker-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  box-shadow: var(--shadow), 0 0 0 1px rgba(0,0,0,.3);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 200px;
+}
+
+/* react-colorful overrides */
+.color-picker-popover .react-colorful {
+  width: 100%;
+  height: 160px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.color-picker-popover .react-colorful__saturation {
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-bottom: none;
+}
+.color-picker-popover .react-colorful__hue {
+  height: 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+.color-picker-popover .react-colorful__pointer {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.5);
+}
+.color-picker-popover .react-colorful__saturation-pointer {
+  width: 16px;
+  height: 16px;
+}
+
+.color-picker-hex-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.color-picker-preview {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,.15);
+  flex-shrink: 0;
+}
+.color-picker-hex-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-family: monospace;
+  letter-spacing: .5px;
+  width: 100%;
+}
+.color-picker-hex-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(68,147,248,.18);
+}
+
+.color-picker-palette {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+}
+.color-picker-swatch {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,.1);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 100ms, border-color 100ms;
+}
+.color-picker-swatch:hover { transform: scale(1.15); border-color: rgba(255,255,255,.4); }
+
 /* ── Model color swatch ── */
 .model-color-swatch {
   width: 18px;

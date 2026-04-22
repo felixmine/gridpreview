@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { Upload, Box, Trash2 } from 'lucide-react'
 import { useStore } from '../../store.js'
+import ColorPicker from './ColorPicker.jsx'
 
 import { loadModelFromFile, ALLOWED_EXTENSIONS, MAX_FILE_SIZE } from '../../lib/modelLoader.js'
 
@@ -123,20 +124,19 @@ export default function ModelLibrary({ pendingModelId, setPendingModelId }) {
                   <div className="model-sub">{m.triangleCount.toLocaleString()} triangles</div>
                 </div>
                 {/* Color swatch — sets preferred color for future placements */}
-                <label
-                  className="model-color-swatch"
-                  title="Set model color"
-                  style={{ background: m.preferredColor ?? '#888' }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <input
-                    type="color"
+                <div onClick={(e) => e.stopPropagation()}>
+                  <ColorPicker
                     value={m.preferredColor ?? '#888888'}
-                    onChange={(e) => setModelColor(m.id, e.target.value)}
-                    style={{ opacity: 0, position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}
-                    tabIndex={-1}
-                  />
-                </label>
+                    onChange={(hex) => setModelColor(m.id, hex)}
+                    placement="top"
+                  >
+                    <div
+                      className="model-color-swatch"
+                      style={{ background: m.preferredColor ?? '#888' }}
+                      title="Set model color"
+                    />
+                  </ColorPicker>
+                </div>
 
                 <button
                   type="button"

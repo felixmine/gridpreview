@@ -17,6 +17,7 @@
     "lucide-react": "^1.8.0",
     "occt-import-js": "^0.0.23",
     "react": "^18.3.1",
+    "react-colorful": "^5.6.1",
     "react-dom": "^18.3.1",
     "three": "^0.169.0",
     "zustand": "^4.5.5"
