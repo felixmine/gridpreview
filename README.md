@@ -1,93 +1,92 @@
 # Gridfinity Preview
 
-Eine Web-App, mit der du ein [Gridfinity](https://gridfinity.xyz/)-Raster im Browser konfigurieren, eigene STL/OBJ-Modelle hochladen, auf dem Grid platzieren (mit Einrasten) und Anordnungen online speichern kannst.
+A web app for configuring a [Gridfinity](https://gridfinity.xyz/) grid in the browser, uploading custom STL/OBJ models, placing them on the grid with snapping, and saving arrangements to the cloud.
 
-Stack: **React + Vite**, **Three.js** (via `@react-three/fiber` + `drei`), **Supabase** (Auth, Postgres, Storage), Zustand für State.
+Stack: **React + Vite**, **Three.js** (via `@react-three/fiber` + `drei`), **Supabase** (Auth, Postgres, Storage), Zustand for state.
 
 ## Features
 
-- Grid-Konfigurator (Breite, Tiefe, Einheitsgröße, Standard 42 mm)
-- Upload von **STL, OBJ, 3MF und STEP/STP** mit Validierung und Triangle-Count-Limit
-  - STL/OBJ/3MF werden direkt geparst (three.js-Loader)
-  - STEP wird über OpenCASCADE-WASM tesseliert (on-demand geladen, ~4-5 MB)
-- 3D-Vorschau mit OrbitControls und Gizmo
-- Drag-to-Place mit Grid-Snapping
-- Auswahl, Rotation (in 90°-Schritten) und farbliche Kennzeichnung
-- Undo/Redo und Keyboard-Shortcuts
-- Benutzerkonten (E-Mail + Passwort) via Supabase Auth
-- Anordnungen pro User cloud-gespeichert (Postgres + RLS)
-- Warnung bei ungespeicherten Änderungen
+- Grid configurator (width, depth, unit size — default 42 mm)
+- Upload **STL, OBJ, 3MF and STEP/STP** with validation and triangle-count limit
+  - STL/OBJ/3MF parsed directly (three.js loaders)
+  - STEP tessellated via OpenCASCADE WASM (loaded on demand, ~4–5 MB)
+- 3D preview with OrbitControls and gizmo
+- Drag-to-place with grid snapping
+- Select, rotate (90° steps), and color-code placed models
+- Undo/redo and keyboard shortcuts
+- User accounts (email + password) via Supabase Auth
+- Arrangements saved per user to the cloud (Postgres + RLS)
+- Warning on unsaved changes
 
-## Sicherheit
+## Security
 
-| Feature | Umsetzung |
+| Feature | Implementation |
 |---|---|
-| Row Level Security | Alle Tabellen (`user_models`, `arrangements`) und der Storage-Bucket haben RLS-Policies, die den Zugriff auf `auth.uid() = user_id` beschränken. |
-| Keine Service-Keys im Frontend | Nur der öffentliche `anon` Key wird ausgeliefert. |
-| Content-Security-Policy | In `index.html` als Meta-Tag. Beim Deploy zusätzlich als HTTP-Header setzen. |
-| Eingabe-Validierung | Grid-Konfig, Platzierungen und Dateien werden im Frontend validiert vor dem INSERT. |
-| Upload-Limits | 50 MB pro Datei, Dateityp-Whitelist (`.stl`, `.obj`), Triangle-Count ≤ 1.5 Mio. |
-| XSS-Schutz | React escaped alles automatisch. Keine `dangerouslySetInnerHTML`. |
-| Password Policy | Mindestens 8 Zeichen; Supabase erzwingt zusätzlich eigene Regeln. |
-| Tokens | Session-Tokens im `localStorage` (Supabase-Default). Für höchste Sicherheit kann auf Cookie-basierte Auth umgestellt werden. |
-| E-Mail-Bestätigung | Supabase kann im Projekt-Setting "Confirm Email" erzwingen (empfohlen). |
+| Row Level Security | All tables (`user_models`, `arrangements`) and the storage bucket have RLS policies restricting access to `auth.uid() = user_id`. |
+| No service keys in the frontend | Only the public `anon` key is shipped. |
+| Content Security Policy | Set as a meta tag in `index.html`. Also set as an HTTP header on deployment. |
+| Input validation | Grid config, placements, and files are validated in the frontend before INSERT. |
+| Upload limits | 50 MB per file, file type whitelist (`.stl`, `.obj`, `.3mf`, `.step`, `.stp`), triangle count ≤ 1.5 M. |
+| XSS protection | React escapes everything automatically. No `dangerouslySetInnerHTML`. |
+| Password policy | Minimum 8 characters; Supabase enforces additional rules. |
+| Tokens | Session tokens in `localStorage` (Supabase default). For maximum security, cookie-based auth can be configured. |
+| Email confirmation | Supabase can enforce "Confirm Email" in project settings (recommended). |
 
 ---
 
-## Lokale Entwicklung
+## Local Development
 
-### 1. Dependencies installieren
+### 1. Install dependencies
 
 ```bash
-cd /pfad/zu/GridPreview
+cd /path/to/GridPreview
 npm install
 ```
 
-### 2. Supabase-Projekt anlegen
+### 2. Set up a Supabase project
 
-1. [supabase.com](https://supabase.com) → neues Projekt (kostenloser Plan reicht).
-2. In **Project Settings → API** kopierst du:
+1. Go to [supabase.com](https://supabase.com) → create a new project (free tier is enough).
+2. In **Project Settings → API**, copy:
    - **Project URL** → `VITE_SUPABASE_URL`
-   - **anon / public Key** → `VITE_SUPABASE_ANON_KEY`
-3. Kopiere `.env.example` zu `.env.local` und trage die Werte ein.
-4. Öffne **SQL Editor** im Supabase-Dashboard und führe den Inhalt von
-   `supabase/schema.sql` aus (legt Tabellen, RLS-Policies und Storage-Bucket an).
-5. Optional in **Authentication → Providers**: E-Mail-Bestätigung aktivieren.
+   - **anon / public key** → `VITE_SUPABASE_ANON_KEY`
+3. Copy `.env.example` to `.env.local` and fill in the values.
+4. Open the **SQL Editor** in the Supabase dashboard and run the contents of
+   `supabase/schema.sql` (creates tables, RLS policies, and storage bucket).
+5. Optionally enable email confirmation under **Authentication → Providers**.
 
-> Du kannst die App auch ohne Supabase starten — dann sind Login und
-> Cloud-Speicher deaktiviert und du arbeitest nur lokal.
+> You can also run the app without Supabase — login and cloud storage will be
+> disabled and you work locally only.
 
-### 3. Dev-Server starten
+### 3. Start the dev server
 
 ```bash
 npm run dev
 ```
 
-Die App läuft dann auf http://localhost:5173.
+The app runs at http://localhost:5173.
 
-### 4. Production Build
+### 4. Production build
 
 ```bash
 npm run build
-npm run preview   # lokale Vorschau des Builds
+npm run preview   # local preview of the build
 ```
 
 ---
 
-## Deployment (kostenlos)
+## Deployment (free)
 
-### Variante: Vercel + Supabase (empfohlen)
+### Option: Vercel + Supabase (recommended)
 
-1. Git-Repo auf GitHub pushen.
-2. Bei [vercel.com](https://vercel.com) einloggen und das Repo importieren.
-3. Unter **Environment Variables** setzen:
+1. Push the git repo to GitHub.
+2. Log in to [vercel.com](https://vercel.com) and import the repo.
+3. Set the following **Environment Variables**:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-4. Framework Preset: **Vite**. Build Command: `npm run build`. Output: `dist`.
-5. Deploy. Fertig.
+4. Framework preset: **Vite**. Build command: `npm run build`. Output: `dist`.
+5. Deploy. Done.
 
-Für höchste Sicherheit in Production zusätzlich per `vercel.json` folgende
-HTTP-Header setzen:
+For maximum security in production, set the following HTTP headers via `vercel.json`:
 
 ```json
 {
@@ -107,86 +106,89 @@ HTTP-Header setzen:
 }
 ```
 
-Alternativ funktionieren **Netlify** (`netlify.toml`) und **Cloudflare Pages** mit denselben Einstellungen.
+**Netlify** (`netlify.toml`) and **Cloudflare Pages** work with the same setup.
 
 ---
 
 ## Docker (optional)
 
-Docker ist **nicht nötig** für diesen Stack — npm+Vite+Supabase laufen lokal direkt. Für reproduzierbare Builds oder Self-Hosting gibt es dennoch optionale Docker-Files:
+Docker is **not required** for this stack — npm + Vite + Supabase run locally without it. Optional Docker files are provided for reproducible builds or self-hosting:
 
 ```bash
-# Dev-Server im Container (Hot-Reload, Port 5173)
+# Dev server in a container (hot reload, port 5173)
 docker compose --profile dev up
 
-# Production-Build im Container (nginx, Port 8080)
+# Production build in a container (nginx, port 8080)
 docker compose --profile prod up --build
 ```
 
-Siehe `Dockerfile`, `docker-compose.yml` und `docker/nginx.conf` für Details.
+See `Dockerfile`, `docker-compose.yml`, and `docker/nginx.conf` for details.
 
-Für **lokale Supabase-Entwicklung** (statt Cloud) gibt es zusätzlich die [Supabase CLI](https://supabase.com/docs/guides/cli), die intern Docker verwendet:
+For **local Supabase development** (instead of cloud), use the [Supabase CLI](https://supabase.com/docs/guides/cli), which runs Postgres, Auth, and Storage as containers:
 
 ```bash
 npm install -g supabase
 supabase init
-supabase start   # startet Postgres, Auth, Storage als Container
+supabase start
 ```
 
 ---
 
-## Projektstruktur
+## Project Structure
 
 ```
 GridPreview/
-├── index.html               # CSP-Meta-Tag, Root-Div
+├── index.html                     # CSP meta tag, root div
 ├── package.json
-├── vite.config.js           # Vendor-Chunks, ES2020-Build
-├── .env.example             # Supabase-Konfig-Template
+├── vite.config.js                 # Vendor chunks, ES2020 build
+├── vercel.json                    # Security headers
+├── .env.example                   # Supabase config template
 ├── supabase/
-│   └── schema.sql           # Tabellen, RLS, Storage-Bucket
+│   └── schema.sql                 # Tables, RLS policies, storage bucket
 └── src/
-    ├── main.jsx             # React-Root mit AuthProvider
-    ├── App.jsx              # Layout (Sidebar + Scene)
-    ├── store.js             # Zustand-Store (State, History)
-    ├── index.css            # Basis-Styles (Dark-Theme)
+    ├── main.jsx                   # React root with AuthProvider
+    ├── App.jsx                    # Layout (toolbar + scene + drawer)
+    ├── store.js                   # Zustand store (state, undo/redo history)
+    ├── index.css                  # Base styles (dark theme)
     ├── context/
-    │   └── AuthContext.jsx  # Supabase-Session-Hook
+    │   └── AuthContext.jsx        # Supabase session hook
     ├── lib/
-    │   ├── supabase.js      # Client-Setup
-    │   ├── gridfinity.js    # Grid-Math & Validierung
-    │   └── modelLoader.js   # STL/OBJ-Loader + Datei-Check
+    │   ├── supabase.js            # Client setup
+    │   ├── gridfinity.js          # Grid math & coordinate transforms
+    │   └── modelLoader.js         # STL/OBJ/3MF/STEP loader + validation
     └── components/
         ├── Auth/AuthPanel.jsx
         ├── Scene/
-        │   ├── GridScene.jsx
-        │   ├── GridBase.jsx
-        │   └── PlacedModel.jsx
+        │   ├── GridScene.jsx      # Canvas, OrbitControls, placement logic
+        │   ├── GridBase.jsx       # Cell grid wireframe
+        │   ├── PlacedModel.jsx    # Single placed mesh with selection highlight
+        │   └── SceneErrorBoundary.jsx
         └── UI/
-            ├── Toolbar.jsx
-            ├── GridConfig.jsx
-            ├── ModelLibrary.jsx
+            ├── Toolbar.jsx        # Top toolbar (grid config, auth, save)
+            ├── BottomDrawer.jsx   # Collapsible model library drawer
+            ├── ModelLibrary.jsx   # Model tile strip with upload tile
+            ├── ModelThumbnail.jsx # Off-screen Three.js render → data URL
+            ├── ColorPicker.jsx    # Hex color picker popover
             └── ArrangementManager.jsx
 ```
 
-## Bedienung
+## Usage
 
-1. **Grid einstellen** (Sidebar links oben) — Breite, Tiefe, Einheit.
-2. **Modell hochladen** (Button in "Modelle"). STL oder OBJ, bis 50 MB.
-3. **Modell auswählen** (Klick auf den Eintrag in der Liste).
-4. **Auf das Grid klicken** — das Modell rastet in die Zelle ein.
-5. **R** dreht, **Entf** löscht, **Ctrl+Z** macht rückgängig.
-6. **Anordnung benennen und speichern** (falls angemeldet).
+1. **Configure the grid** (toolbar) — width, depth, unit size.
+2. **Upload a model** — drag files onto the drawer or click the upload button. STL, OBJ, 3MF, or STEP, up to 50 MB.
+3. **Select a model** — click a tile in the bottom drawer.
+4. **Click a cell** on the grid — the model snaps into place.
+5. **R** rotates, **Del** removes, **Ctrl+Z** undoes, **arrow keys** move the selected model.
+6. **Name and save the arrangement** (requires login).
 
-## Roadmap / Ideen
+## Roadmap / Ideas
 
-- Per-User-Storage für STL-Dateien (derzeit werden Geometrien nur
-  lokal im RAM gehalten — die DB speichert nur Platzierungs-Metadaten).
-- Multi-Cell-Bins (Modelle, die 2x1, 2x2 etc. Zellen belegen).
-- Teilen-Link pro Anordnung (read-only Share).
-- Export der Szene als glTF/PNG.
-- OAuth-Login (Google, GitHub) — in Supabase ein Klick.
+- Per-user storage for model files (geometries are currently held in RAM only — the DB stores placement metadata only).
+- Multi-cell bins (models occupying 2×1, 2×2, etc. cells).
+- Share link per arrangement (read-only).
+- Export scene as glTF / PNG.
+- OAuth login (Google, GitHub) — one click in Supabase.
 
-## Lizenz
+## License
 
 MIT
