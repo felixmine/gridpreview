@@ -92,6 +92,35 @@ async function loadThreeMfMulti(arrayBuffer) {
   }
 }
 
+/**
+ * Parses slicer-specific metadata files and returns a Set of object IDs that
+ * represent non-model geometry (modifiers, support blockers, support enforcers).
+ *
+ * Handles:
+ *  - Bambu Studio / Orca Slicer: Metadata/model_settings.config
+ *    <part id="..." subtype="modifier|support_blocker|support_enforcer">
+ */
+function collectSlicerExcludedIds(files) {
+  const excluded = new Set()
+  const configKey = Object.keys(files).find(
+    (k) => k.toLowerCase() === 'metadata/model_settings.config',
+  )
+  if (!configKey) return excluded
+  try {
+    const doc = new DOMParser().parseFromString(strFromU8(files[configKey]), 'application/xml')
+    if (doc.getElementsByTagName('parsererror').length) return excluded
+    for (const part of elementsByLocalName(doc, 'part')) {
+      const subtype = part.getAttribute('subtype') ?? ''
+      // 'normal_part' or empty = regular geometry; anything else = skip
+      if (subtype && subtype !== 'normal_part') {
+        const id = part.getAttribute('id')
+        if (id) excluded.add(id)
+      }
+    }
+  } catch (_) { /* ignore — metadata is optional */ }
+  return excluded
+}
+
 /** Skalierungs-Faktor einer 3MF-unit zu mm. Default laut Spec: millimeter. */
 const UNIT_TO_MM = {
   micron: 0.001, micrometer: 0.001,
@@ -124,6 +153,9 @@ function loadThreeMfFallbackMulti(arrayBuffer) {
     ?? modelKeys.find((k) => k.toLowerCase().endsWith('/3dmodel.model'))
     ?? modelKeys[0]
 
+  // Slicer-spezifische Metadaten: IDs von Modifier-Meshes, Support-Blockern etc.
+  const excluded = collectSlicerExcludedIds(files)
+
   // Alle Objekte sammeln (aus allen .model-Dateien), damit Komponenten-Refs
   // ueber Dateigrenzen hinweg aufgeloest werden koennen.
   const objects = new Map()
@@ -133,7 +165,7 @@ function loadThreeMfFallbackMulti(arrayBuffer) {
   for (const key of modelKeys) {
     const doc = new DOMParser().parseFromString(strFromU8(files[key]), 'application/xml')
     if (doc.getElementsByTagName('parsererror').length) continue
-    parse3mfDocIntoObjects(doc, objects)
+    parse3mfDocIntoObjects(doc, objects, excluded)
     if (key === preferred) {
       primaryDoc = doc
       const modelEl = elementsByLocalName(doc, 'model')[0]
@@ -159,17 +191,19 @@ function loadThreeMfFallbackMulti(arrayBuffer) {
   }
 
   const items = buildItems.length
-    ? buildItems
-    : Array.from(objects.keys()).map((id) => ({
-        objectId: id,
-        name: objects.get(id)?.name ?? null,
-        transform: new THREE.Matrix4(),
-      }))
+    ? buildItems.filter((item) => !excluded.has(item.objectId))
+    : Array.from(objects.keys())
+        .filter((id) => !excluded.has(id))
+        .map((id) => ({
+          objectId: id,
+          name: objects.get(id)?.name ?? null,
+          transform: new THREE.Matrix4(),
+        }))
 
   const output = []
   for (const item of items) {
     const positions = []
-    accumulate3mfObject(item.objectId, item.transform, objects, positions, 0)
+    accumulate3mfObject(item.objectId, item.transform, objects, positions, 0, excluded)
     if (positions.length === 0) continue
 
     // Unit-Skalierung anwenden (in place).
@@ -204,11 +238,18 @@ function loadThreeMfFallbackMulti(arrayBuffer) {
 }
 
 /** Zaehlt, wie viele Objekte aus einem XML-Dokument in die Map gekommen sind. */
-function parse3mfDocIntoObjects(doc, objects) {
+function parse3mfDocIntoObjects(doc, objects, excluded) {
   let added = 0
   for (const el of elementsByLocalName(doc, 'object')) {
     const id = el.getAttribute('id')
     if (!id || objects.has(id)) continue
+
+    // Standard 3MF type: "model" (default) = real geometry; skip support/surface/etc.
+    const type = (el.getAttribute('type') ?? 'model').toLowerCase()
+    if (type !== 'model') {
+      excluded.add(id)
+      continue
+    }
 
     // Ein <object> hat entweder ein direktes <mesh> ODER ein <components>-Element.
     const name = el.getAttribute('name') ?? el.getAttribute('p:name') ?? null
@@ -301,9 +342,12 @@ function parse3mfMatrix(str) {
 
 /**
  * Rekursive Akkumulation. Tiefen-Limit verhindert zirkulaere Referenzen.
+ * `excluded` ist ein Set von Objekt-IDs, die uebersprungen werden sollen
+ * (Support-Blocker, Modifier-Meshes, etc.).
  */
-function accumulate3mfObject(objectId, transform, objects, positionsOut, depth) {
+function accumulate3mfObject(objectId, transform, objects, positionsOut, depth, excluded) {
   if (depth > 32) return
+  if (excluded.has(objectId)) return
   const obj = objects.get(objectId)
   if (!obj) return // fehlende Referenz -> still ueberspringen
 
@@ -318,8 +362,9 @@ function accumulate3mfObject(objectId, transform, objects, positionsOut, depth) 
     }
   } else if (obj.kind === 'components') {
     for (const c of obj.components) {
+      if (excluded.has(c.objectId)) continue
       const combined = new THREE.Matrix4().multiplyMatrices(transform, c.transform)
-      accumulate3mfObject(c.objectId, combined, objects, positionsOut, depth + 1)
+      accumulate3mfObject(c.objectId, combined, objects, positionsOut, depth + 1, excluded)
     }
   }
 }

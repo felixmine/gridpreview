@@ -38,3 +38,11 @@ lerna-debug.log*
 
 # OS
 Thumbs.db
+
+# Claude Code local data
+.claude/
+memory/
+
+# Dev artifacts
+mockup.html
+SKILL.md

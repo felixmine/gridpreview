@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import { HexColorPicker } from 'react-colorful'
 
 const PALETTE = [
@@ -18,13 +18,25 @@ const PALETTE = [
  *   children   – trigger element
  */
 export default function ColorPicker({ value, onChange, disabled, placement = 'bottom', children }) {
-  const [open,    setOpen]    = useState(false)
-  const [hexText, setHexText] = useState(value)
+  const [open,         setOpen]         = useState(false)
+  const [hexText,      setHexText]      = useState(value)
+  const [popoverShift, setPopoverShift] = useState(0)
   const popoverRef = useRef(null)
   const triggerRef = useRef(null)
 
   // Sync hex input when value prop changes externally
   useEffect(() => { setHexText(value) }, [value])
+
+  // Clamp popover to viewport after it renders
+  useLayoutEffect(() => {
+    if (!open) { setPopoverShift(0); return }
+    if (!popoverRef.current) return
+    const rect = popoverRef.current.getBoundingClientRect()
+    let dx = 0
+    if (rect.right > window.innerWidth - 8) dx = -(rect.right - window.innerWidth + 8)
+    if (rect.left + dx < 8) dx = 8 - rect.left
+    setPopoverShift(dx)
+  }, [open])
 
   // Close on outside click
   useEffect(() => {
@@ -68,7 +80,10 @@ export default function ColorPicker({ value, onChange, disabled, placement = 'bo
         <div
           ref={popoverRef}
           className="color-picker-popover"
-          style={placement === 'top' ? { top: 'auto', bottom: 'calc(100% + 8px)' } : undefined}
+          style={{
+            ...(placement === 'top' ? { top: 'auto', bottom: 'calc(100% + 8px)' } : {}),
+            transform: `translateX(calc(-50% + ${popoverShift}px))`,
+          }}
         >
           <HexColorPicker color={value} onChange={handleChange} />
 
