@@ -1,16 +1,18 @@
 import { useState, useRef, useCallback } from 'react'
-import { Upload, ChevronDown } from 'lucide-react'
+import { Upload, ChevronDown, Link } from 'lucide-react'
 import { useStore } from '../../store.js'
 import { loadModelFromFile, ALLOWED_EXTENSIONS, MAX_FILE_SIZE } from '../../lib/modelLoader.js'
 import ModelLibrary from './ModelLibrary.jsx'
+import ImportFromURLDialog from './ImportFromURLDialog.jsx'
 
 const MAX_MB = Math.round(MAX_FILE_SIZE / 1024 / 1024)
 
 export default function BottomDrawer({ pendingModelId, setPendingModelId }) {
-  const [open,     setOpen]     = useState(true)
-  const [busy,     setBusy]     = useState(false)
-  const [error,    setError]    = useState('')
-  const [dragging, setDragging] = useState(false)
+  const [open,       setOpen]       = useState(true)
+  const [busy,       setBusy]       = useState(false)
+  const [error,      setError]      = useState('')
+  const [dragging,   setDragging]   = useState(false)
+  const [urlDialog,  setUrlDialog]  = useState(false)
 
   const addModel   = useStore((s) => s.addModel)
   const models     = useStore((s) => s.models)
@@ -97,6 +99,17 @@ export default function BottomDrawer({ pendingModelId, setPendingModelId }) {
           type="button"
           className="icon-btn"
           style={{ width: 28, height: 28 }}
+          onClick={() => setUrlDialog(true)}
+          title="Import from Printables / MakerWorld URL"
+          disabled={busy}
+        >
+          <Link size={13} />
+        </button>
+
+        <button
+          type="button"
+          className="icon-btn"
+          style={{ width: 28, height: 28 }}
           onClick={() => fileInputRef.current?.click()}
           title={`Upload model · max ${MAX_MB} MB`}
           disabled={busy}
@@ -113,6 +126,9 @@ export default function BottomDrawer({ pendingModelId, setPendingModelId }) {
           style={{ display: 'none' }}
         />
       </div>
+
+      {/* URL import dialog */}
+      {urlDialog && <ImportFromURLDialog onClose={() => setUrlDialog(false)} />}
 
       {/* Drawer body */}
       <div className="drawer-body">
