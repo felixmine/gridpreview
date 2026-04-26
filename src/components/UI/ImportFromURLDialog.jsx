@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, X, Download, AlertCircle, Loader } from 'lucide-react'
 import { listModelFiles, downloadModelFile } from '../../lib/urlImporter.js'
-import { supabase } from '../../lib/supabase.js'
+import { supabase, hasSupabaseConfig } from '../../lib/supabase.js'
+
+let edgeFunctionWarmedUp = false
 import { loadModelFromFile } from '../../lib/modelLoader.js'
 import { useStore } from '../../store.js'
 
@@ -27,9 +29,10 @@ export default function ImportFromURLDialog({ onClose }) {
 
   useEffect(() => { inputRef.current?.focus() }, [])
 
-  // Warm up the Edge Function on dialog open to avoid cold-start 503 on first fetch
+  // Warm up on first open per session — free-tier Edge Functions cold-start on first invoke
   useEffect(() => {
-    if (supabase) {
+    if (hasSupabaseConfig && !edgeFunctionWarmedUp) {
+      edgeFunctionWarmedUp = true
       supabase.functions.invoke('import-model', { body: { action: 'ping' } }).catch(() => {})
     }
   }, [])

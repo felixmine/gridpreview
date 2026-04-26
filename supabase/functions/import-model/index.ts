@@ -18,7 +18,7 @@ function extractPrintablesId(url: string): string | null {
 }
 
 async function listPrintables(modelId: string) {
-  // Step 1: get model name + file IDs (Printables split files into stls/otherFiles)
+  // Printables splits file listing (stls/otherFiles) from signed download URLs (getDownloadLink) — two round-trips required
   const listQuery = `
     query PrintProfile($id: ID!) {
       print(id: $id) {
@@ -44,7 +44,6 @@ async function listPrintables(modelId: string) {
 
   if (stls.length === 0 && others.length === 0) throw new Error('No printable files found on Printables')
 
-  // Step 2: get signed download URLs via getDownloadLink mutation
   const filesInput = [
     ...(stls.length  ? [{ fileType: 'stl',   ids: stls.map(f => f.id) }] : []),
     ...(others.length ? [{ fileType: 'other', ids: others.map(f => f.id) }] : []),
@@ -227,7 +226,6 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // ping: warmup request, just return ok
     if (action === 'ping') {
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

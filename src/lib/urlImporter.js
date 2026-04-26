@@ -1,5 +1,7 @@
 import { supabase } from './supabase.js'
 
+const COLD_START_RETRY_DELAY_MS = 1500
+
 /**
  * @typedef {{ id: string, name: string, size: number, format: string, downloadUrl: string }} ModelFile
  * @typedef {{ platform: string, modelName: string, files: ModelFile[] }} ModelListing
@@ -20,7 +22,7 @@ export async function listModelFiles(pageUrl) {
     })
     const is503 = error?.message?.includes('503') || error?.message?.includes('non-2xx')
     if (is503 && attempt === 0) {
-      await new Promise((r) => setTimeout(r, 1500))
+      await new Promise((r) => setTimeout(r, COLD_START_RETRY_DELAY_MS))
       continue
     }
     if (error) throw new Error(error.message)
@@ -43,7 +45,6 @@ export async function downloadModelFile(downloadUrl, filename) {
   // against the Edge Function URL with the anon key.
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-  if (!supabaseUrl || !supabaseKey) throw new Error('Supabase env vars missing')
 
   const res = await fetch(`${supabaseUrl}/functions/v1/import-model`, {
     method: 'POST',

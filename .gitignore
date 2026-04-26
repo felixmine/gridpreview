@@ -46,3 +46,6 @@ memory/
 # Dev artifacts
 mockup.html
 SKILL.md
+
+#Temp
+supabase/.temp/*
