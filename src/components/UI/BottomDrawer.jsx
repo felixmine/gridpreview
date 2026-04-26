@@ -95,13 +95,13 @@ export default function BottomDrawer({ pendingModelId, setPendingModelId }) {
 
         <button
           type="button"
-          className="icon-btn"
-          style={{ width: 28, height: 28 }}
+          className="icon-text-btn primary"
           onClick={() => fileInputRef.current?.click()}
           title={`Upload model · max ${MAX_MB} MB`}
           disabled={busy}
         >
           <Upload size={13} />
+          Upload
         </button>
 
         <input
