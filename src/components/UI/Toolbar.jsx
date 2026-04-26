@@ -249,11 +249,12 @@ export default function Toolbar() {
       {/* Unit popover */}
       <div className="topbar-popover-anchor">
         <button
-          className={`icon-btn${openPopover === 'unit' ? ' active' : ''}`}
+          className={`icon-text-btn${openPopover === 'unit' ? ' active' : ''}`}
           onClick={() => togglePopover('unit')}
           title="Grid unit size"
         >
-          <Ruler size={15} />
+          <Ruler size={14} />
+          {gridConfig.unitMm} mm
         </button>
         {openPopover === 'unit' && (
           <div className="topbar-popover" style={{ minWidth: 180 }}>
@@ -276,11 +277,12 @@ export default function Toolbar() {
 
       {/* Clear grid */}
       <button
-        className="icon-btn"
+        className="icon-text-btn"
         onClick={() => { if (window.confirm('Remove all placements?')) clearAll() }}
-        title="Clear grid"
+        title="Remove all placements"
       >
-        <X size={15} />
+        <X size={14} />
+        Clear
       </button>
 
       {/* Save + load — only when logged in */}
@@ -289,11 +291,12 @@ export default function Toolbar() {
 
         <div className="topbar-popover-anchor">
           <button
-            className={`icon-btn${openPopover === 'save' ? ' active' : ''}`}
+            className={`icon-text-btn${openPopover === 'save' ? ' active' : ''}`}
             onClick={() => togglePopover('save')}
             title="Save arrangement"
           >
-            <Save size={15} />
+            <Save size={14} />
+            Save
           </button>
           {openPopover === 'save' && (
             <div className="topbar-popover" style={{ width: 220 }}>
@@ -328,11 +331,12 @@ export default function Toolbar() {
 
         <div className="topbar-popover-anchor">
           <button
-            className={`icon-btn${openPopover === 'saved' ? ' active' : ''}`}
+            className={`icon-text-btn${openPopover === 'saved' ? ' active' : ''}`}
             onClick={() => togglePopover('saved')}
             title="Saved arrangements"
           >
-            <FolderOpen size={15} />
+            <FolderOpen size={14} />
+            Open
           </button>
           {openPopover === 'saved' && (
             <div className="topbar-popover" style={{ width: 264, maxHeight: 320, overflowY: 'auto' }}>

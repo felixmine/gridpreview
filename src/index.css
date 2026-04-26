@@ -99,6 +99,7 @@ html, body, #root {
 .icon-text-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .icon-text-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .icon-text-btn.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.icon-text-btn.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 
 /* ── User chip ── */
 .user-chip {
