@@ -7,6 +7,7 @@ import { useStore } from '../../store.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { GRID_LIMITS, validateGridConfig, computeCellSpan, validatePlacement } from '../../lib/gridfinity.js'
 import { supabase } from '../../lib/supabase.js'
+import { restoreModels } from '../../lib/modelPersistence.js'
 import ColorPicker from './ColorPicker.jsx'
 import AuthPanel from '../Auth/AuthPanel.jsx'
 
@@ -57,6 +58,7 @@ export default function Toolbar() {
   const placements    = useStore((s) => s.placements)
   const models        = useStore((s) => s.models)
   const markSaved     = useStore((s) => s.markSaved)
+  const addModel      = useStore((s) => s.addModel)
   const loadArr       = useStore((s) => s.loadArrangement)
 
   const total = gridConfig.gridWidth * gridConfig.gridDepth
@@ -150,7 +152,13 @@ export default function Toolbar() {
   async function onLoad(id) {
     const { data } = await supabase
       .from('arrangements').select('*').eq('id', id).single()
-    if (data) { loadArr(data); setOpenPopover(null) }
+    if (!data) return
+    loadArr(data)
+    setOpenPopover(null)
+    if (user) {
+      const neededIds = (data.placements ?? []).map((p) => p.model_id)
+      restoreModels(neededIds, user.id, useStore.getState().models, addModel).catch(() => {})
+    }
   }
 
   async function onDelete(id, label) {

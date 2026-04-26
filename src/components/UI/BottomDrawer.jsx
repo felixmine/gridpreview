@@ -1,7 +1,9 @@
 import { useState, useRef, useCallback } from 'react'
 import { Upload, ChevronDown } from 'lucide-react'
 import { useStore } from '../../store.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { loadModelFromFile, ALLOWED_EXTENSIONS, MAX_FILE_SIZE } from '../../lib/modelLoader.js'
+import { persistUpload } from '../../lib/modelPersistence.js'
 import ModelLibrary from './ModelLibrary.jsx'
 
 const MAX_MB = Math.round(MAX_FILE_SIZE / 1024 / 1024)
@@ -12,6 +14,7 @@ export default function BottomDrawer({ pendingModelId, setPendingModelId }) {
   const [error,    setError]    = useState('')
   const [dragging, setDragging] = useState(false)
 
+  const { user } = useAuth()
   const addModel   = useStore((s) => s.addModel)
   const models     = useStore((s) => s.models)
   const modelCount = Object.keys(models).length
@@ -25,23 +28,25 @@ export default function BottomDrawer({ pendingModelId, setPendingModelId }) {
     for (const file of files) {
       try {
         const parts = await loadModelFromFile(file)
-        for (const part of parts) {
+        const ids = parts.map(() => crypto.randomUUID())
+        for (let i = 0; i < parts.length; i++) {
           addModel({
-            id: crypto.randomUUID(),
-            name: part.name,
-            geometry: part.geometry,
-            triangleCount: part.triangleCount,
-            boundingBox: part.boundingBox,
-            sizeBytes: part.sizeBytes,
+            id: ids[i],
+            name: parts[i].name,
+            geometry: parts[i].geometry,
+            triangleCount: parts[i].triangleCount,
+            boundingBox: parts[i].boundingBox,
+            sizeBytes: parts[i].sizeBytes,
             source: 'local',
           })
         }
+        if (user) persistUpload(file, ids, parts, user.id).catch(() => {})
       } catch (err) {
         setError(`${file.name}: ${err.message}`)
       }
     }
     setBusy(false)
-  }, [addModel])
+  }, [addModel, user])
 
   function onFileInput(e) {
     const files = Array.from(e.target.files ?? [])
