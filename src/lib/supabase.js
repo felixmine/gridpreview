@@ -9,21 +9,21 @@ import { createClient } from '@supabase/supabase-js'
 // ---------------------------------------------------------------------
 
 const url = import.meta.env.VITE_SUPABASE_URL
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
-export const hasSupabaseConfig = Boolean(url && anonKey)
+export const hasSupabaseConfig = Boolean(url && publishableKey)
 
 if (!hasSupabaseConfig && import.meta.env.DEV) {
   // eslint-disable-next-line no-console
   console.warn(
-    '[Supabase] VITE_SUPABASE_URL oder VITE_SUPABASE_ANON_KEY fehlt. '
+    '[Supabase] VITE_SUPABASE_URL oder VITE_SUPABASE_PUBLISHABLE_KEY fehlt. '
     + 'Login und Cloud-Speicherung sind deaktiviert. '
     + 'Kopiere .env.example zu .env.local und fülle die Werte aus.',
   )
 }
 
 export const supabase = hasSupabaseConfig
-  ? createClient(url, anonKey, {
+  ? createClient(url, publishableKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,

@@ -18,43 +18,68 @@ function extractPrintablesId(url: string): string | null {
 }
 
 async function listPrintables(modelId: string) {
-  const query = `
+  // Step 1: get model name + file IDs (Printables split files into stls/otherFiles)
+  const listQuery = `
     query PrintProfile($id: ID!) {
       print(id: $id) {
         name
-        files {
-          id
-          name
-          fileSize
-          fileType
-          downloadPath
-        }
+        stls { id name fileSize }
+        otherFiles { id name fileSize }
       }
     }
   `
   const res = await fetch('https://api.printables.com/graphql/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, variables: { id: modelId } }),
+    body: JSON.stringify({ query: listQuery, variables: { id: modelId } }),
   })
   if (!res.ok) throw new Error(`Printables API error: ${res.status}`)
   const json = await res.json()
   const print = json?.data?.print
   if (!print) throw new Error('Model not found on Printables')
 
-  const files = (print.files ?? [])
-    .filter((f: { name: string }) => {
-      const ext = f.name.split('.').pop()?.toLowerCase() ?? ''
-      return ALLOWED_FORMATS.has(ext)
-    })
-    .map((f: { id: string; name: string; fileSize: number; downloadPath: string }) => ({
+  type RawFile = { id: string; name: string; fileSize: number }
+  const stls: RawFile[] = (print.stls ?? []).filter((f: RawFile) => ALLOWED_FORMATS.has(f.name.split('.').pop()?.toLowerCase() ?? ''))
+  const others: RawFile[] = (print.otherFiles ?? []).filter((f: RawFile) => ALLOWED_FORMATS.has(f.name.split('.').pop()?.toLowerCase() ?? ''))
+
+  if (stls.length === 0 && others.length === 0) throw new Error('No printable files found on Printables')
+
+  // Step 2: get signed download URLs via getDownloadLink mutation
+  const filesInput = [
+    ...(stls.length  ? [{ fileType: 'stl',   ids: stls.map(f => f.id) }] : []),
+    ...(others.length ? [{ fileType: 'other', ids: others.map(f => f.id) }] : []),
+  ]
+  const dlMutation = `
+    mutation GetDownloadLink($printId: ID!, $files: [DownloadFileInput]) {
+      getDownloadLink(printId: $printId, files: $files, source: model_detail) {
+        ok
+        output { files { id link } }
+      }
+    }
+  `
+  const dlRes = await fetch('https://api.printables.com/graphql/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: dlMutation, variables: { printId: modelId, files: filesInput } }),
+  })
+  if (!dlRes.ok) throw new Error(`Printables download-link error: ${dlRes.status}`)
+  const dlJson = await dlRes.json()
+  const linkMap = new Map<string, string>(
+    ((dlJson?.data?.getDownloadLink?.output?.files ?? []) as Array<{ id: string; link: string }>)
+      .map(f => [f.id, f.link])
+  )
+
+  const files = [...stls, ...others]
+    .filter(f => linkMap.has(f.id))
+    .map(f => ({
       id: f.id,
       name: f.name,
       size: f.fileSize,
       format: f.name.split('.').pop()?.toLowerCase(),
-      downloadUrl: f.downloadPath,
+      downloadUrl: linkMap.get(f.id)!,
     }))
 
+  if (files.length === 0) throw new Error('No downloadable files found on Printables')
   return { platform: 'printables', modelName: print.name, files }
 }
 
@@ -66,62 +91,59 @@ function extractMakerworldId(url: string): string | null {
 }
 
 async function listMakerworld(modelId: string) {
-  const res = await fetch(
-    `https://makerworld.com/api/v1/design/detail?id=${modelId}`,
-    {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json',
-        'Referer': 'https://makerworld.com/',
-      },
-    }
-  )
-  if (!res.ok) throw new Error(`MakerWorld API error: ${res.status}`)
-  const json = await res.json()
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Referer': `https://makerworld.com/en/models/${modelId}`,
+    'Origin': 'https://makerworld.com',
+  }
 
-  // MakerWorld response structure (reverse-engineered from web app)
-  const modelName: string = json?.title ?? json?.name ?? 'Unknown model'
+  // Try v2 first, fall back to v1
+  let json: Record<string, unknown> | null = null
+  for (const endpoint of [
+    `https://makerworld.com/api/v2/design/detail?id=${modelId}`,
+    `https://makerworld.com/api/v1/design/detail?id=${modelId}`,
+  ]) {
+    const res = await fetch(endpoint, { headers })
+    if (res.ok) {
+      json = await res.json()
+      break
+    }
+  }
+  if (!json) throw new Error('MakerWorld model not found or API unavailable')
+
+  const modelName: string = (json.title ?? json.name ?? 'Unknown model') as string
+
+  // v2 wraps data under a `data` key; v1 returns it flat
+  const root = (json.data ?? json) as Record<string, unknown>
+
   const profileList: Array<{
     id: number
-    profileType?: string
     downloadUrl?: string
     files?: Array<{ id: number; name: string; size: number; url: string }>
-  }> = json?.profileList ?? json?.profiles ?? []
+  }> = (root.profileList ?? root.profiles ?? []) as Array<{
+    id: number; downloadUrl?: string
+    files?: Array<{ id: number; name: string; size: number; url: string }>
+  }>
 
   const files: Array<{ id: string; name: string; size: number; format: string; downloadUrl: string }> = []
 
   for (const profile of profileList) {
-    const profileFiles: Array<{ id: number; name: string; size: number; url: string }> =
-      profile.files ?? []
+    const profileFiles = profile.files ?? []
     for (const f of profileFiles) {
       const ext = (f.name ?? '').split('.').pop()?.toLowerCase() ?? ''
       if (ALLOWED_FORMATS.has(ext)) {
-        files.push({
-          id: String(f.id),
-          name: f.name,
-          size: f.size,
-          format: ext,
-          downloadUrl: f.url,
-        })
+        files.push({ id: String(f.id), name: f.name, size: f.size, format: ext, downloadUrl: f.url })
       }
     }
-    // Some responses nest files differently — try top-level downloadUrl as fallback
     if (profileFiles.length === 0 && profile.downloadUrl) {
-      const name = `profile_${profile.id}.stl`
-      files.push({
-        id: String(profile.id),
-        name,
-        size: 0,
-        format: 'stl',
-        downloadUrl: profile.downloadUrl,
-      })
+      files.push({ id: String(profile.id), name: `profile_${profile.id}.stl`, size: 0, format: 'stl', downloadUrl: profile.downloadUrl })
     }
   }
 
   if (files.length === 0) {
-    throw new Error(
-      'No printable files found. MakerWorld may require login for this model.'
-    )
+    throw new Error('No printable files found. MakerWorld may require login for this model.')
   }
 
   return { platform: 'makerworld', modelName, files }
@@ -202,6 +224,13 @@ Deno.serve(async (req: Request) => {
           'Content-Type': contentType,
           'Content-Disposition': disposition,
         },
+      })
+    }
+
+    // ping: warmup request, just return ok
+    if (action === 'ping') {
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 

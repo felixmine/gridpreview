@@ -73,6 +73,7 @@ export default function ArrangementManager() {
     const { data, error: err } = await supabase
       .from('arrangements').select('*').eq('id', id).single()
     if (err) { setError(err.message); return }
+
     loadArrangement(data)
     setStatus(`Loaded "${data.name}"`)
   }

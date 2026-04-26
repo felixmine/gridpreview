@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, X, Download, AlertCircle, Loader } from 'lucide-react'
 import { listModelFiles, downloadModelFile } from '../../lib/urlImporter.js'
+import { supabase } from '../../lib/supabase.js'
 import { loadModelFromFile } from '../../lib/modelLoader.js'
 import { useStore } from '../../store.js'
 
@@ -25,6 +26,13 @@ export default function ImportFromURLDialog({ onClose }) {
   const inputRef = useRef(null)
 
   useEffect(() => { inputRef.current?.focus() }, [])
+
+  // Warm up the Edge Function on dialog open to avoid cold-start 503 on first fetch
+  useEffect(() => {
+    if (supabase) {
+      supabase.functions.invoke('import-model', { body: { action: 'ping' } }).catch(() => {})
+    }
+  }, [])
 
   // Close on Escape
   useEffect(() => {

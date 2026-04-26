@@ -12,12 +12,21 @@ import { supabase } from './supabase.js'
  */
 export async function listModelFiles(pageUrl) {
   if (!supabase) throw new Error('Supabase is not configured')
-  const { data, error } = await supabase.functions.invoke('import-model', {
-    body: { action: 'list', url: pageUrl },
-  })
-  if (error) throw new Error(error.message)
-  if (data?.error) throw new Error(data.error)
-  return data
+
+  // Retry once on 503 — Supabase free-tier functions can cold-start during the CORS preflight
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { data, error } = await supabase.functions.invoke('import-model', {
+      body: { action: 'list', url: pageUrl },
+    })
+    const is503 = error?.message?.includes('503') || error?.message?.includes('non-2xx')
+    if (is503 && attempt === 0) {
+      await new Promise((r) => setTimeout(r, 1500))
+      continue
+    }
+    if (error) throw new Error(error.message)
+    if (data?.error) throw new Error(data.error)
+    return data
+  }
 }
 
 /**
@@ -33,7 +42,7 @@ export async function downloadModelFile(downloadUrl, filename) {
   // supabase.functions.invoke doesn't support raw binary — use fetch directly
   // against the Edge Function URL with the anon key.
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
   if (!supabaseUrl || !supabaseKey) throw new Error('Supabase env vars missing')
 
   const res = await fetch(`${supabaseUrl}/functions/v1/import-model`, {
