@@ -79,7 +79,6 @@ export default function PlacedModel({
         rotation={[-Math.PI / 2, 0, 0]}
         position={[xOff, yOff, zOff]}
         castShadow
-        receiveShadow
         onPointerDown={(e) => {
           e.stopPropagation()
           onSelect?.(placement.id)
