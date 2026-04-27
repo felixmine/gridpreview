@@ -48,7 +48,7 @@ npm install
 1. Go to [supabase.com](https://supabase.com) → create a new project (free tier is enough).
 2. In **Project Settings → API**, copy:
    - **Project URL** → `VITE_SUPABASE_URL`
-   - **anon / public key** → `VITE_SUPABASE_ANON_KEY`
+   - **anon / public key** → `VITE_SUPABASE_PUBLISHABLE_KEY`
 3. Copy `.env.example` to `.env.local` and fill in the values.
 4. Open the **SQL Editor** in the Supabase dashboard and run the contents of
    `supabase/schema.sql` (creates tables, RLS policies, and storage bucket).
@@ -82,7 +82,7 @@ npm run preview   # local preview of the build
 2. Log in to [vercel.com](https://vercel.com) and import the repo.
 3. Set the following **Environment Variables**:
    - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`
 4. Framework preset: **Vite**. Build command: `npm run build`. Output: `dist`.
 5. Deploy. Done.
 
@@ -183,7 +183,6 @@ GridPreview/
 
 ## Roadmap / Ideas
 
-- Per-user storage for model files (geometries are currently held in RAM only — the DB stores placement metadata only).
 - Multi-cell bins (models occupying 2×1, 2×2, etc. cells).
 - Share link per arrangement (read-only).
 - Export scene as glTF / PNG.
