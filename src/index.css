@@ -49,6 +49,9 @@ html, body, #root {
   flex-shrink: 0;
 }
 .toolbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -.3px;

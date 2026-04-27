@@ -175,7 +175,10 @@ export default function Toolbar() {
   return (
     <header className="toolbar">
       {/* Logo */}
-      <div className="toolbar-logo">Gridfinity<span>Preview</span></div>
+      <div className="toolbar-logo">
+        <img src="/logo.svg" alt="" width="22" height="22" style={{ display: 'block', flexShrink: 0 }} />
+        Gridfinity<span>Preview</span>
+      </div>
 
       <div className="toolbar-divider" />
 
