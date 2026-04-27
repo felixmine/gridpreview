@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="c-blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7ab5ff"/>
+      <stop offset="100%" stop-color="#3b7de8"/>
+    </linearGradient>
+    <linearGradient id="c-green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+    <filter id="c-glow">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feBlend in="SourceGraphic" in2="b" mode="screen"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#0d1117"/>
+
+  <!--
+    5×5 pixel-art G in a grid, cell=10 gap=1
+    x = 5 + col*11,  y = 5 + row*11
+
+    G pattern:
+    row0: . # # # .
+    row1: # . . . .
+    row2: # . # # .
+    row3: # . . # .
+    row4: . # # # .
+
+    Blue cells  = outer G skeleton
+    Green cells = inner shelf (2,2)(3,2)(3,3)
+  -->
+
+  <!-- Row 0: (1,0)(2,0)(3,0) — blue -->
+  <rect x="16" y="5"  width="10" height="10" rx="2" fill="url(#c-blue)" filter="url(#c-glow)"/>
+  <rect x="27" y="5"  width="10" height="10" rx="2" fill="url(#c-blue)" filter="url(#c-glow)"/>
+  <rect x="38" y="5"  width="10" height="10" rx="2" fill="url(#c-blue)" filter="url(#c-glow)"/>
+
+  <!-- Row 1: (0,1) — blue -->
+  <rect x="5"  y="16" width="10" height="10" rx="2" fill="url(#c-blue)"/>
+
+  <!-- Row 2: (0,2) blue | (2,2)(3,2) green -->
+  <rect x="5"  y="27" width="10" height="10" rx="2" fill="url(#c-blue)"/>
+  <rect x="27" y="27" width="10" height="10" rx="2" fill="url(#c-green)" filter="url(#c-glow)"/>
+  <rect x="38" y="27" width="10" height="10" rx="2" fill="url(#c-green)" filter="url(#c-glow)"/>
+
+  <!-- Row 3: (0,3) blue | (3,3) green -->
+  <rect x="5"  y="38" width="10" height="10" rx="2" fill="url(#c-blue)"/>
+  <rect x="38" y="38" width="10" height="10" rx="2" fill="url(#c-green)"/>
+
+  <!-- Row 4: (1,4)(2,4)(3,4) — blue -->
+  <rect x="16" y="49" width="10" height="10" rx="2" fill="url(#c-blue)"/>
+  <rect x="27" y="49" width="10" height="10" rx="2" fill="url(#c-blue)"/>
+  <rect x="38" y="49" width="10" height="10" rx="2" fill="url(#c-blue)"/>
+
+  <!-- Subtle dot grid on empty cells for texture -->
+  <circle cx="10.5" cy="10.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+  <circle cx="21.5" cy="10.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+  <circle cx="10.5" cy="21.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+  <circle cx="21.5" cy="21.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+  <circle cx="32.5" cy="21.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+  <circle cx="43.5" cy="21.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+  <circle cx="21.5" cy="32.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+  <circle cx="10.5" cy="43.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+  <circle cx="21.5" cy="43.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+  <circle cx="10.5" cy="54.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+  <circle cx="43.5" cy="54.5" r="0.8" fill="#1e3252" opacity="0.6"/>
+</svg>

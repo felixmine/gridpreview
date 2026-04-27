@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="b-fill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7ab5ff"/>
+      <stop offset="100%" stop-color="#3b7de8"/>
+    </linearGradient>
+    <linearGradient id="b-trail1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4f8cff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#3b6fd4" stop-opacity="0.35"/>
+    </linearGradient>
+    <linearGradient id="b-trail2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4f8cff" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#3b6fd4" stop-opacity="0.12"/>
+    </linearGradient>
+    <filter id="b-glow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feBlend in="SourceGraphic" in2="blur" mode="screen"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#0d1117"/>
+
+  <!-- 3×3 grid — all cells as outlines -->
+  <!-- Row 0 -->
+  <rect x="7"  y="7"  width="15" height="15" rx="3" fill="none" stroke="#1e3252" stroke-width="1"/>
+  <rect x="25" y="7"  width="15" height="15" rx="3" fill="none" stroke="#1e3252" stroke-width="1"/>
+  <rect x="43" y="7"  width="15" height="15" rx="3" fill="none" stroke="#1e3252" stroke-width="1"/>
+  <!-- Row 1 -->
+  <rect x="7"  y="25" width="15" height="15" rx="3" fill="none" stroke="#1e3252" stroke-width="1"/>
+  <!-- centre cell — trail 1 -->
+  <rect x="25" y="25" width="15" height="15" rx="3" fill="url(#b-trail1)" stroke="#2a4880" stroke-width="1"/>
+  <rect x="43" y="25" width="15" height="15" rx="3" fill="none" stroke="#1e3252" stroke-width="1"/>
+  <!-- Row 2 -->
+  <rect x="7"  y="43" width="15" height="15" rx="3" fill="none" stroke="#1e3252" stroke-width="1"/>
+  <!-- bottom-centre — trail 2 -->
+  <rect x="25" y="43" width="15" height="15" rx="3" fill="url(#b-trail2)" stroke="#1e3252" stroke-width="1"/>
+  <!-- active cell — bottom-right, full fill + glow -->
+  <rect x="43" y="43" width="15" height="15" rx="3" fill="url(#b-fill)" filter="url(#b-glow)"/>
+  <rect x="43" y="43" width="15" height="15" rx="3" fill="none" stroke="#7ab5ff" stroke-width="0.75" opacity="0.7"/>
+
+  <!-- Placement guides (corner brackets) on the active cell -->
+  <path d="M43,48 L43,43 L48,43" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.85"/>
+  <path d="M53,43 L58,43 L58,48" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.85"/>
+  <path d="M43,53 L43,58 L48,58" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.85"/>
+  <path d="M58,53 L58,58 L53,58" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.85"/>
+</svg>

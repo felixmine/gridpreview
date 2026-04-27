@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="a-plate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2d45"/>
+      <stop offset="100%" stop-color="#0f1a28"/>
+    </linearGradient>
+    <linearGradient id="a-amber-top" x1="0" y1="0" x2="1" y2="1" gradientUnits="userSpaceOnUse"
+      x1="12" y1="15" x2="32" y2="25">
+      <stop offset="0%" stop-color="#fcd34d"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="a-blue-top" x1="32" y1="8" x2="52" y2="18" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <filter id="a-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.5" result="b"/>
+      <feComposite in="SourceGraphic" in2="b" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#0d1117"/>
+
+  <!-- Plate depth — right face -->
+  <polygon points="52,34 32,44 32,47 52,37" fill="#080d14"/>
+  <!-- Plate depth — left face -->
+  <polygon points="12,34 32,44 32,47 12,37" fill="#0c1220"/>
+
+  <!-- Plate top surface -->
+  <polygon points="32,24 52,34 32,44 12,34" fill="url(#a-plate)"/>
+
+  <!-- Grid dividers -->
+  <line x1="42" y1="29" x2="22" y2="39" stroke="#1d3358" stroke-width="0.8"/>
+  <line x1="22" y1="29" x2="42" y2="39" stroke="#1d3358" stroke-width="0.8"/>
+  <!-- Plate rim -->
+  <polygon points="32,24 52,34 32,44 12,34" fill="none" stroke="#22385a" stroke-width="0.8"/>
+
+  <!-- ── Bin at grid (0,1) — AMBER, left cell, height 2 ── -->
+  <!-- left face  (row+ side) -->
+  <polygon points="12,34 22,39 22,25 12,20" fill="#78350f"/>
+  <!-- right face (col+ side) -->
+  <polygon points="32,34 22,39 22,25 32,20" fill="#b45309"/>
+  <!-- top face -->
+  <polygon points="22,15 32,20 22,25 12,20" fill="url(#a-amber-top)"/>
+  <!-- top edge highlight -->
+  <polygon points="22,15 32,20 22,25 12,20" fill="none" stroke="#fef08a" stroke-width="0.6" opacity="0.45"/>
+
+  <!-- ── Bin at grid (1,0) — BLUE, right cell, height 3 ── -->
+  <!-- left face -->
+  <polygon points="32,34 42,39 42,18 32,13" fill="#1e3a8a"/>
+  <!-- right face -->
+  <polygon points="52,34 42,39 42,18 52,13" fill="#2563eb"/>
+  <!-- top face -->
+  <polygon points="42,8 52,13 42,18 32,13" fill="url(#a-blue-top)"/>
+  <!-- top edge highlight -->
+  <polygon points="42,8 52,13 42,18 32,13" fill="none" stroke="#bfdbfe" stroke-width="0.6" opacity="0.5"/>
+</svg>
