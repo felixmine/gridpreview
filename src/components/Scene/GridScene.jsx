@@ -8,6 +8,53 @@ import PlacedModel from './PlacedModel.jsx'
 import { useStore } from '../../store.js'
 import { worldToCell, computeCellSpan, BASE_HEIGHT_MM, clamp } from '../../lib/gridfinity.js'
 
+function ScreenshotBridge() {
+  const { gl, scene } = useThree()
+  const registerScreenshot = useStore((s) => s.registerScreenshot)
+  const gridConfig = useStore((s) => s.gridConfig)
+  const gridConfigRef = useRef(gridConfig)
+  useEffect(() => { gridConfigRef.current = gridConfig }, [gridConfig])
+
+  useEffect(() => {
+    registerScreenshot(() => {
+      const W = 320, H = 180
+      const { gridWidth, gridDepth, unitMm } = gridConfigRef.current
+      const dist = Math.max(300, Math.sqrt((gridWidth * unitMm) ** 2 + (gridDepth * unitMm) ** 2) * 0.9)
+
+      const tmpCamera = new THREE.PerspectiveCamera(45, W / H, 1, 5000)
+      tmpCamera.position.set(dist * 0.7, dist * 0.7, dist * 0.7)
+      tmpCamera.lookAt(0, 0, 0)
+      tmpCamera.updateMatrixWorld()
+
+      const rt = new THREE.WebGLRenderTarget(W, H)
+      rt.texture.colorSpace = gl.outputColorSpace
+      gl.setRenderTarget(rt)
+      gl.render(scene, tmpCamera)
+      gl.setRenderTarget(null)
+
+      const pixels = new Uint8Array(W * H * 4)
+      gl.readRenderTargetPixels(rt, 0, 0, W, H, pixels)
+      rt.dispose()
+
+      // WebGL framebuffer origin is bottom-left; flip vertically for canvas
+      const offscreen = document.createElement('canvas')
+      offscreen.width = W
+      offscreen.height = H
+      const ctx = offscreen.getContext('2d')
+      const imageData = ctx.createImageData(W, H)
+      for (let y = 0; y < H; y++) {
+        const srcRow = (H - 1 - y) * W * 4
+        imageData.data.set(pixels.subarray(srcRow, srcRow + W * 4), y * W * 4)
+      }
+      ctx.putImageData(imageData, 0, 0)
+      return offscreen.toDataURL('image/jpeg', 0.75)
+    })
+    return () => registerScreenshot(null)
+  }, [gl, scene, registerScreenshot])
+
+  return null
+}
+
 // ---------------------------------------------------------------------
 // DragController: läuft INNERHALB des Canvas (kann useThree nutzen).
 // Registriert pointermove/pointerup auf window wenn ein Drag aktiv ist,
@@ -192,6 +239,7 @@ export default function GridScene({ pendingModelId, onPlaced }) {
       />
       <directionalLight position={[-300, 300, -200]} intensity={0.35} />
 
+      <ScreenshotBridge />
       {/* DragController muss innerhalb des Canvas stehen (nutzt useThree) */}
       <DragController
         active={!!dragState}

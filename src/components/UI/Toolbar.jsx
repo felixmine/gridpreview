@@ -57,9 +57,10 @@ export default function Toolbar() {
   const setGridConfig = useStore((s) => s.setGridConfig)
   const placements    = useStore((s) => s.placements)
   const models        = useStore((s) => s.models)
-  const markSaved     = useStore((s) => s.markSaved)
-  const addModel      = useStore((s) => s.addModel)
-  const loadArr       = useStore((s) => s.loadArrangement)
+  const markSaved          = useStore((s) => s.markSaved)
+  const addModel           = useStore((s) => s.addModel)
+  const loadArr            = useStore((s) => s.loadArrangement)
+  const captureScreenshot  = useStore((s) => s.captureScreenshot)
 
   const total = gridConfig.gridWidth * gridConfig.gridDepth
   const occupiedCells = placements.reduce((acc, p) => {
@@ -107,7 +108,7 @@ export default function Toolbar() {
     if (!user || !isConfigured) return
     const { data } = await supabase
       .from('arrangements')
-      .select('id,name,grid_width,grid_depth,unit_mm,updated_at')
+      .select('id,name,grid_width,grid_depth,unit_mm,updated_at,preview_url')
       .order('updated_at', { ascending: false })
       .limit(50)
     setArrangements(data ?? [])
@@ -130,6 +131,7 @@ export default function Toolbar() {
           rotation: p.rotation, color: p.color,
         }))
         .filter((p) => validatePlacement(p, gridConfig))
+      const preview_url = captureScreenshot()
       const { error } = await supabase.from('arrangements').insert({
         user_id:    user.id,
         name:       trimmed,
@@ -137,6 +139,7 @@ export default function Toolbar() {
         grid_depth: gridConfig.gridDepth,
         unit_mm:    gridConfig.unitMm,
         placements: safePlacements,
+        preview_url,
       })
       if (error) throw error
       setSaveStatus('Saved!')
@@ -347,13 +350,20 @@ export default function Toolbar() {
             Open
           </button>
           {openPopover === 'saved' && (
-            <div className="topbar-popover" style={{ width: 264, maxHeight: 320, overflowY: 'auto' }}>
+            <div className="topbar-popover" style={{ width: 300, maxHeight: 380, overflowY: 'auto' }}>
               <div className="topbar-popover-label">Saved arrangements</div>
               {arrangements.length === 0 ? (
                 <p className="hint-text" style={{ fontSize: 11 }}>No saved arrangements yet.</p>
               ) : arrangements.map((a) => (
-                <div key={a.id} className="arr-item" style={{ marginBottom: 4 }}>
-                  <div className="arr-info">
+                <div key={a.id} className="arr-item" style={{ marginBottom: 6, alignItems: 'flex-start', gap: 8 }}>
+                  {a.preview_url && (
+                    <img
+                      src={a.preview_url}
+                      alt=""
+                      style={{ width: 72, height: 40, objectFit: 'cover', borderRadius: 3, flexShrink: 0, border: '1px solid var(--border)' }}
+                    />
+                  )}
+                  <div className="arr-info" style={{ flex: 1, minWidth: 0 }}>
                     <div className="arr-name">{a.name}</div>
                     <div className="arr-sub">
                       {a.grid_width}×{a.grid_depth} · {a.unit_mm} mm ·{' '}

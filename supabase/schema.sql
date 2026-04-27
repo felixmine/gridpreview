@@ -69,6 +69,7 @@ create table if not exists public.arrangements (
   grid_depth   int  not null check (grid_depth  between 1 and 20),
   unit_mm      int  not null default 42 check (unit_mm between 10 and 200),
   placements   jsonb not null default '[]'::jsonb,
+  preview_url  text,                               -- base64 JPEG thumbnail, nullable
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );

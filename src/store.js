@@ -14,6 +14,9 @@ import { DEFAULT_UNIT_MM, clamp, normalizeAngle } from './lib/gridfinity.js'
 
 const HISTORY_LIMIT = 50
 
+// Module-level ref — avoids putting a function in Zustand state (no re-renders).
+let _screenshotFn = null
+
 function snapshot(state) {
   // Nur veränderlicher State in die History - Geometrien sind unveränderlich.
   return {
@@ -250,6 +253,10 @@ export const useStore = create((set, get) => ({
   },
 
   markSaved() { set({ dirty: false }) },
+
+  // -------------------- Screenshot bridge --------------------
+  registerScreenshot(fn) { _screenshotFn = fn },
+  captureScreenshot() { return _screenshotFn?.() ?? null },
 }))
 
 function randomColor() {
