@@ -1,38 +1,16 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Preview und arrangiere Gridfinity-Bins und -Modelle im Browser." />
+    <meta name="description" content="Browser-based 3D arrangement tool for Gridfinity. Upload STL/OBJ/3MF/STEP models, place them on a grid, and save your layouts." />
     <meta name="color-scheme" content="dark light" />
-    <!--
-      Content Security Policy:
-      - default-src 'self' blockiert externe Ressourcen
-      - connect-src erlaubt nur Supabase (Env-Variable wird per Build ersetzt)
-      - script-src erlaubt nur eigene Scripte (keine Inline-Scripts)
-      - object-src 'none' blockiert Flash/Plugins
-      Beim Deployment sollte die CSP zusätzlich als HTTP-Header gesetzt werden.
-    -->
-    <!--
-      Hinweis: `frame-ancestors` funktioniert laut Spec nur als HTTP-Header,
-      nicht als Meta-Tag. Wir setzen es daher in `vercel.json` / nginx-Konfig.
-    -->
-    <!--
-      `wasm-unsafe-eval` ist noetig fuer den STEP-Parser (OpenCASCADE-WASM).
-      Es erlaubt AUSSCHLIESSLICH die Ausfuehrung von WebAssembly, nicht eval().
-    -->
-    <meta http-equiv="Content-Security-Policy" content="
-      default-src 'self';
-      script-src 'self' 'wasm-unsafe-eval';
-      style-src 'self' 'unsafe-inline';
-      img-src 'self' blob: data:;
-      font-src 'self' data:;
-      connect-src 'self' https://*.supabase.co wss://*.supabase.co;
-      worker-src 'self' blob:;
-      object-src 'none';
-      base-uri 'self';
-    " />
+    <meta property="og:title" content="Gridfinity Preview" />
+    <meta property="og:description" content="Browser-based 3D arrangement tool for Gridfinity. Upload STL/OBJ/3MF/STEP models, place them on a grid, and save your layouts." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.gridpreview.app" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://vitals.vercel-insights.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self';" />
     <title>Gridfinity Preview</title>
   </head>
   <body>
